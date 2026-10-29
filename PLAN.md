@@ -24,7 +24,29 @@ Další milníky (rozsah upřesní zadavatel): skutečné integrace, historie sc
 - Vypnutí přepínačů hook nemaže: hook se spustí, hned skončí a schránku nezmění (Claude Code ho jako proces spustí vždy, dokud není odebrán).
 - Aplikace sama žádný proces nespouští.
 
-Další milníky: Codex, Terminal, Pure Remote, Termux, historie schránky.
+## Milník 2B — integrace Codex (Stop hook) ✅ (CLI dle dokumentace; end-to-end čeká na schválení uživatelem)
+
+Průzkum (Codex CLI 0.165.0, dokumentace https://developers.openai.com/codex/hooks):
+- `notify` v `config.toml` je jen jeden program a uživatel ho už používá (Codex Computer Use, `turn-ended`). **Nepřepisuje se ani nemění.** Pro Pure Clipboard se nepoužívá.
+- Codex má oficiální hooky stejné struktury jako Claude Code. `Stop` dostává na stdin JSON s `last_assistant_message` (`string | null`), `session_id`, `turn_id`, `stop_hook_active`. Exit 0 s prázdným stdout = úspěch.
+- Hooky se čtou z `~/.codex/hooks.json` (nebo inline `[hooks]` v `config.toml`), všechny vrstvy se sčítají. Pure Clipboard používá **jen `~/.codex/hooks.json`**; `config.toml` se nikdy nečte ani nezapisuje (jen se zjistí, zda obsahuje vlastní `[hooks]`, a uživatel se upozorní).
+- **Hook musí uživatel v Codexu schválit** (`/hooks`; schválení je vázané na hash definice). Do schválení se hook přeskakuje (ověřeno: `codex exec` s neschváleným hookem běží a hook mlčky vynechá). Schválení za uživatele neprovádíme a nepoužíváme `--dangerously-bypass-hook-trust`. Příkaz hooku se při aktualizaci pomocného programu nemění (stabilní cesta), takže schválení přetrvá.
+- Rozhraní: Codex CLI = podporováno dle dokumentace. Codex Desktop / IDE rozšíření: dokumentace neuvádí, zda hooky spouští, a nelze to bezpečně ověřit bez zásahu do uživatelského nastavení → **nepotvrzeno, neslibujeme**. Sdílený app-server daemon naznačuje stejné chování, ale není to ověřeno.
+
+Implementace:
+- Společný `StopHookHandler` pro Claude Code i Codex (`pureclipboard-hook claude-stop|codex-stop`); každá integrace má vlastní přepínač a vlastní soubor poslední události (`last-event.json` / `last-event-codex.json`).
+- Instalátor (`HookTarget`) je společný: záloha (`codex-hooks-*.json`), kontrola konfliktů, atomický zápis, ověření po zápisu, odmítnutí symbolického odkazu/neplatného JSON. Pomocný program je jeden sdílený (`.../PureClipboard/bin/pureclipboard-hook`); smaže se až s poslední odebranou integrací.
+- CLI: `install-codex|uninstall-codex|status-codex [--apply] [--settings CESTA]`. Bez `--apply` jen plán.
+- GUI: karta Codex (stav, plán změn k potvrzení, instalace/odebrání, upozornění na schválení v `/hooks`, „Otestovat (bez zápisu)“ a „Test se schránkou…“ s potvrzením).
+
+Souběh více agentů (Claude Code i Codex, více relací):
+- Zápisy do schránky jsou serializované zámkem (`flock` na `clipboard.lock`); nezískání zámku do 2 s = nekopíruje.
+- Ochrana proti přepsání: pokud jiná relace (jiný `session_id` nebo jiná integrace) zkopírovala před méně než 5 s, pozdější hook **nekopíruje** (`recent-copy-by-other-session`) a schránka zůstane beze změny. Stejná relace smí kopírovat hned znovu. Stav v `clipboard-claim.json` (0600).
+- Omezení: v dávce více agentů zůstane první odpověď, ostatní se přeskočí (je to viditelné v kartě „Poslední událost“). Nesleduje se změna schránky uživatelem ani jinými aplikacemi (žádné sledování schránky).
+
+Známá omezení Codexu: `last_assistant_message` může být `null` (pak se nekopíruje); `SubagentStop` se neregistruje; Codex při souběhu `hooks.json` a inline `[hooks]` při startu varuje.
+
+Další milníky: Terminal, Pure Remote, Termux, historie schránky.
 
 ## Závazné požadavky na veřejnou distribuci
 

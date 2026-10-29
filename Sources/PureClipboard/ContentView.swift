@@ -20,9 +20,10 @@ struct ContentView: View {
                             SensitiveDataCard(config: config)
                         }
                     }
-                    ClaudeHookCard()
+                    HookCard(target: .claude)
+                    HookCard(target: .codex)
                     ConfigStatusCard()
-                    Text("Milník 2A · Aplikace sama nespouští žádné procesy ani služby")
+                    Text("Milník 2B · Aplikace sama nespouští žádné procesy ani služby")
                         .font(.system(size: 11))
                         .foregroundStyle(Theme.tertiaryText)
                         .padding(.top, 4)
@@ -34,7 +35,7 @@ struct ContentView: View {
         }
         .tint(Theme.accent)
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            model.refreshHook()
+            model.refreshHooks()
         }
     }
 }
@@ -79,10 +80,10 @@ private struct PreviewNotice: View {
                 .foregroundStyle(Theme.warning)
                 .font(.system(size: 15))
             VStack(alignment: .leading, spacing: 3) {
-                Text("Aktivní je pouze Claude Code")
+                Text("Aktivní jsou Claude Code a Codex")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Theme.primaryText)
-                Text("Claude Code kopíruje po nainstalování hooku (karta níže). Přepínače Apple Terminal, Codex, Pure Remote a Termux zatím jen mění uloženou konfiguraci a nic nedělají.")
+                Text("Claude Code a Codex kopírují po nainstalování hooku (karty níže). Přepínače Apple Terminal, Pure Remote a Termux zatím jen mění uloženou konfiguraci a nic nedělají.")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
@@ -147,8 +148,13 @@ struct IntegrationsCard: View {
 
 extension IntegrationsCard {
     func trailing(for id: IntegrationID) -> String {
-        guard id == .claudeCode else { return "Neaktivní" }
-        let hook = model.hookState
+        let target: HookTarget
+        switch id {
+        case .claudeCode: target = .claude
+        case .codex: target = .codex
+        default: return "Neaktivní"
+        }
+        let hook = model.controller(for: target).state
         if !hook.isRegistered { return "Hook nenainstalován" }
         if hook.hooksDisabled { return "Hooky vypnuty v Claude" }
         return "Hook nainstalován"

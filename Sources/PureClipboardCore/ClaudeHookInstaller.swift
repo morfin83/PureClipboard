@@ -13,13 +13,13 @@ public enum ClaudeHookError: Error, Equatable, LocalizedError, Sendable {
     public var errorDescription: String? {
         switch self {
         case .settingsIsSymlink(let path):
-            "Soubor nastavení Claude Code je symbolický odkaz (\(path)). Upravte jej ručně, aplikace jej nepřepíše."
+            "Soubor nastavení hooků je symbolický odkaz (\(path)). Upravte jej ručně, aplikace jej nepřepíše."
         case .settingsInvalidJSON(let reason):
-            "Nastavení Claude Code není platný JSON (\(reason)). Soubor nebyl změněn."
+            "Nastavení hooků není platný JSON (\(reason)). Soubor nebyl změněn."
         case .unexpectedStructure(let reason):
-            "Neočekávaná struktura nastavení Claude Code: \(reason). Soubor nebyl změněn."
+            "Neočekávaná struktura nastavení hooků: \(reason). Soubor nebyl změněn."
         case .modifiedExternally:
-            "Nastavení Claude Code se mezitím změnilo. Nic nebylo zapsáno, zkuste to znovu."
+            "Nastavení hooků se mezitím změnilo. Nic nebylo zapsáno, zkuste to znovu."
         case .helperMissing(let path):
             "Pomocný program hooku nebyl nalezen: \(path)"
         case .io(let reason):
@@ -28,6 +28,17 @@ public enum ClaudeHookError: Error, Equatable, LocalizedError, Sendable {
             "Kontrola po zápisu selhala (\(reason)). Původní soubor byl obnoven ze zálohy."
         }
     }
+}
+
+public enum HookTarget: String, CaseIterable, Sendable {
+    case claude, codex
+
+    public var hookArgument: String { self == .claude ? "claude-stop" : "codex-stop" }
+    public var integration: IntegrationID { self == .claude ? .claudeCode : .codex }
+    public var displayName: String { self == .claude ? "Claude Code" : "Codex" }
+    public var backupPrefix: String { self == .claude ? "claude-settings" : "codex-hooks" }
+    /// Suffix of the helper's management commands: install-claude, status-codex, ...
+    public var commandSuffix: String { rawValue }
 }
 
 public struct ClaudeHookPaths: Equatable, Sendable {
@@ -43,12 +54,17 @@ public struct ClaudeHookPaths: Equatable, Sendable {
     public var helper: URL { supportDirectory.appendingPathComponent("bin/pureclipboard-hook") }
     public var backups: URL { supportDirectory.appendingPathComponent("backups") }
 
-    public static func standard(configURL: URL, environment: [String: String] = ProcessInfo.processInfo.environment) -> ClaudeHookPaths {
+    public static func standard(
+        target: HookTarget = .claude, configURL: URL,
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) -> ClaudeHookPaths {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let override = environment[target == .claude ? "PURECLIPBOARD_CLAUDE_SETTINGS_PATH" : "PURECLIPBOARD_CODEX_HOOKS_PATH"]
         let settings: URL
-        if let override = environment["PURECLIPBOARD_CLAUDE_SETTINGS_PATH"], !override.isEmpty {
+        if let override, !override.isEmpty {
             settings = URL(fileURLWithPath: (override as NSString).expandingTildeInPath)
         } else {
-            settings = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude/settings.json")
+            settings = home.appendingPathComponent(target == .claude ? ".claude/settings.json" : ".codex/hooks.json")
         }
         return ClaudeHookPaths(settings: settings, supportDirectory: configURL.deletingLastPathComponent())
     }
@@ -64,6 +80,8 @@ public struct ClaudeHookState: Equatable, Sendable {
     public var helperMatchesBundled: Bool?
     public var hooksDisabled = false
     public var otherStopHandlers = 0
+    /// Non-fatal observations worth showing to the user (e.g. inline hooks in Codex config.toml).
+    public var notes: [String] = []
 
     public init() {}
 
@@ -80,25 +98,26 @@ public struct ClaudeHookReport: Equatable, Sendable {
 
 public struct ClaudeHookInstaller: Sendable {
     public static let helperName = "pureclipboard-hook"
-    public static let hookArgument = "claude-stop"
     public static let timeoutSeconds = 15
 
     public let paths: ClaudeHookPaths
+    public let target: HookTarget
 
-    public init(paths: ClaudeHookPaths) {
+    public init(paths: ClaudeHookPaths, target: HookTarget = .claude) {
         self.paths = paths
+        self.target = target
     }
 
     // MARK: Pure JSON transforms
 
-    static func command(for helper: URL) -> String {
+    static func command(for helper: URL, target: HookTarget = .claude) -> String {
         let quoted = "'" + helper.path.replacingOccurrences(of: "'", with: "'\\''") + "'"
-        return "\(quoted) \(hookArgument)"
+        return "\(quoted) \(target.hookArgument)"
     }
 
     /// Recognises handlers created by this app, whatever path the helper had when they were written.
-    static func isOurs(_ command: String) -> Bool {
-        guard command.hasSuffix(" \(hookArgument)") else { return false }
+    static func isOurs(_ command: String, target: HookTarget = .claude) -> Bool {
+        guard command.hasSuffix(" \(target.hookArgument)") else { return false }
         return command.contains("/\(helperName)' ") || command.contains("/\(helperName) ")
     }
 
@@ -107,7 +126,7 @@ public struct ClaudeHookInstaller: Sendable {
         return nil
     }
 
-    static func adding(to root: JSONValue, command: String) throws(ClaudeHookError) -> (root: JSONValue, otherHandlers: Int) {
+    static func adding(to root: JSONValue, command: String, target: HookTarget = .claude) throws(ClaudeHookError) -> (root: JSONValue, otherHandlers: Int) {
         guard case .object(var object) = root else { throw .unexpectedStructure("kořen není objekt") }
 
         var hooks: [String: JSONValue]
@@ -137,7 +156,7 @@ public struct ClaudeHookInstaller: Sendable {
             guard case .array(let handlers) = inner else { throw .unexpectedStructure("pole „hooks“ ve skupině není pole") }
             var kept: [JSONValue] = []
             for handler in handlers {
-                if let existing = handlerCommand(handler), isOurs(existing) {
+                if let existing = handlerCommand(handler), isOurs(existing, target: target) {
                     if !placed { kept.append(ours); placed = true }
                 } else {
                     kept.append(handler)
@@ -155,7 +174,7 @@ public struct ClaudeHookInstaller: Sendable {
     }
 
     /// Removes only this app's handlers. With `prune`, containers emptied by the removal are dropped too.
-    static func removing(from root: JSONValue, prune: Bool) -> (root: JSONValue, removed: Int) {
+    static func removing(from root: JSONValue, prune: Bool, target: HookTarget = .claude) -> (root: JSONValue, removed: Int) {
         guard case .object(var object) = root,
               case .object(var hooks)? = object["hooks"],
               case .array(let groups)? = hooks["Stop"] else { return (root, 0) }
@@ -168,7 +187,7 @@ public struct ClaudeHookInstaller: Sendable {
                 continue
             }
             let kept = handlers.filter { handler in
-                if let command = handlerCommand(handler), isOurs(command) { removed += 1; return false }
+                if let command = handlerCommand(handler), isOurs(command, target: target) { removed += 1; return false }
                 return true
             }
             if kept.count == handlers.count { rewritten.append(group); continue }
@@ -184,8 +203,8 @@ public struct ClaudeHookInstaller: Sendable {
     }
 
     /// Canonical form used to prove that an edit changed nothing except this app's handlers.
-    static func normalized(_ root: JSONValue) -> JSONValue {
-        var value = removing(from: root, prune: true).root
+    static func normalized(_ root: JSONValue, target: HookTarget = .claude) -> JSONValue {
+        var value = removing(from: root, prune: true, target: target).root
         guard case .object(var object) = value else { return value }
         if case .object(var hooks)? = object["hooks"] {
             if case .array(let groups)? = hooks["Stop"], groups.isEmpty { hooks["Stop"] = nil }
@@ -241,7 +260,7 @@ public struct ClaudeHookInstaller: Sendable {
                 for group in groups {
                     guard case .object(let groupObject) = group, case .array(let handlers)? = groupObject["hooks"] else { continue }
                     for handler in handlers {
-                        if let command = Self.handlerCommand(handler), Self.isOurs(command) {
+                        if let command = Self.handlerCommand(handler), Self.isOurs(command, target: target) {
                             state.registeredCount += 1
                         } else {
                             state.otherStopHandlers += 1
@@ -252,6 +271,7 @@ public struct ClaudeHookInstaller: Sendable {
         } catch {
             state.settingsProblem = error.localizedDescription
         }
+        if target == .codex { state.notes += codexConfigNotes() }
         return state
     }
 
@@ -268,8 +288,8 @@ public struct ClaudeHookInstaller: Sendable {
         }
 
         let file = try readSettings()
-        let command = Self.command(for: paths.helper)
-        let (updated, others) = try Self.adding(to: file.root, command: command)
+        let command = Self.command(for: paths.helper, target: target)
+        let (updated, others) = try Self.adding(to: file.root, command: command, target: target)
         let alreadyIdentical = updated == file.root
         let helperBytes: Data
         do { helperBytes = try Data(contentsOf: bundledHelper) } catch { throw .io(error.localizedDescription) }
@@ -280,7 +300,7 @@ public struct ClaudeHookInstaller: Sendable {
             report.steps.append("Záznam hooku v \(paths.settings.path) už existuje beze změny")
         } else {
             if file.data != nil { report.steps.append("Zálohuje \(paths.settings.path) do \(paths.backups.path)") }
-            report.steps.append("Přidá hook Stop do \(paths.settings.path) (stávající hooky ve Stop zůstanou: \(others))")
+            report.steps.append("Přidá hook Stop (\(target.displayName)) do \(paths.settings.path) (stávající hooky ve Stop zůstanou: \(others))")
         }
         report.changed = !helperCurrent || !alreadyIdentical
         if dryRun || !report.changed { return report }
@@ -300,7 +320,7 @@ public struct ClaudeHookInstaller: Sendable {
 
             try AtomicFile.write(newData, to: paths.settings, mode: file.mode, createDirectory: true)
             try verify(
-                expected: Self.normalized(file.root),
+                expected: Self.normalized(file.root, target: target),
                 requireRegistered: 1,
                 restore: file.data, backup: report.backup
             )
@@ -313,18 +333,19 @@ public struct ClaudeHookInstaller: Sendable {
     }
 
     @discardableResult
-    public func uninstall(dryRun: Bool = false) throws(ClaudeHookError) -> ClaudeHookReport {
+    /// `removeHelper: false` keeps the shared helper copy because another integration still points at it.
+    public func uninstall(dryRun: Bool = false, removeHelper: Bool = true) throws(ClaudeHookError) -> ClaudeHookReport {
         var report = ClaudeHookReport()
         if let info = try lstatSettings(), (info.st_mode & S_IFMT) == S_IFLNK {
             throw .settingsIsSymlink(paths.settings.path)
         }
         let file = try readSettings()
-        let (updated, removed) = Self.removing(from: file.root, prune: true)
-        let helperPresent = FileManager.default.fileExists(atPath: paths.helper.path)
+        let (updated, removed) = Self.removing(from: file.root, prune: true, target: target)
+        let helperPresent = removeHelper && FileManager.default.fileExists(atPath: paths.helper.path)
 
         if removed > 0 {
             report.steps.append("Zálohuje \(paths.settings.path) do \(paths.backups.path)")
-            report.steps.append("Odebere \(removed) záznam(y) Pure Clipboard z hooks.Stop (ostatní hooky zůstanou)")
+            report.steps.append("Odebere \(removed) záznam(y) Pure Clipboard (\(target.displayName)) z hooks.Stop (ostatní hooky zůstanou)")
         }
         if helperPresent { report.steps.append("Smaže pomocný program \(paths.helper.path)") }
         report.changed = removed > 0 || helperPresent
@@ -338,7 +359,7 @@ public struct ClaudeHookInstaller: Sendable {
                 guard latest.fingerprint == file.fingerprint else { throw ClaudeHookError.modifiedExternally }
                 try AtomicFile.write(newData, to: paths.settings, mode: file.mode, createDirectory: true)
                 try verify(
-                    expected: Self.normalized(file.root),
+                    expected: Self.normalized(file.root, target: target),
                     requireRegistered: 0,
                     restore: original, backup: report.backup
                 )
@@ -370,7 +391,7 @@ public struct ClaudeHookInstaller: Sendable {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyyMMdd-HHmmss"
-        let name = "claude-settings-\(formatter.string(from: Date()))-\(ConfigFileStore.fingerprint(original).prefix(8)).json"
+        let name = "\(target.backupPrefix)-\(formatter.string(from: Date()))-\(ConfigFileStore.fingerprint(original).prefix(8)).json"
         let url = paths.backups.appendingPathComponent(name)
         do {
             try AtomicFile.write(original, to: url, mode: 0o600)
@@ -393,14 +414,27 @@ public struct ClaudeHookInstaller: Sendable {
         }
         let written: SettingsFile
         do { written = try readSettings() } catch { throw rollback(error.localizedDescription) }
-        guard Self.normalized(written.root) == expected else { throw rollback("změnil se jiný obsah než hook") }
+        guard Self.normalized(written.root, target: target) == expected else { throw rollback("změnil se jiný obsah než hook") }
         var count = 0
         if case .object(let hooks)? = written.root["hooks"], case .array(let groups)? = hooks["Stop"] {
             for group in groups {
                 guard case .object(let groupObject) = group, case .array(let handlers)? = groupObject["hooks"] else { continue }
-                count += handlers.filter { Self.handlerCommand($0).map(Self.isOurs) ?? false }.count
+                count += handlers.filter { Self.handlerCommand($0).map { Self.isOurs($0, target: target) } ?? false }.count
             }
         }
         guard count == requireRegistered else { throw rollback("nesouhlasí počet záznamů hooku (\(count))") }
+    }
+
+    /// Codex merges hooks.json with inline [hooks] tables of config.toml and warns at startup. Only a presence check; nothing is kept.
+    private func codexConfigNotes() -> [String] {
+        let config = paths.settings.deletingLastPathComponent().appendingPathComponent("config.toml")
+        guard let text = try? String(contentsOf: config, encoding: .utf8) else { return [] }
+        let hasInlineHooks = text.split(whereSeparator: \.isNewline).contains { line in
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            return trimmed.hasPrefix("[hooks") || trimmed.hasPrefix("[[hooks")
+        }
+        return hasInlineHooks
+            ? ["config.toml obsahuje vlastní [hooks]; Codex je sloučí s hooks.json a při startu na to upozorní."]
+            : []
     }
 }
