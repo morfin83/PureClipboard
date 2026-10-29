@@ -46,7 +46,23 @@ Souběh více agentů (Claude Code i Codex, více relací):
 
 Známá omezení Codexu: `last_assistant_message` může být `null` (pak se nekopíruje); `SubagentStop` se neregistruje; Codex při souběhu `hooks.json` a inline `[hooks]` při startu varuje.
 
-Další milníky: Terminal, Pure Remote, Termux, historie schránky.
+## Milník 2C — Apple Terminal (příkaz `pclip`) ✅
+
+Průzkum:
+- Terminal.app ani zsh nemají oficiální událost s výstupem příkazu. `preexec`/`precmd` dávají jen příkaz a návratový kód. Čtení okna/historie přes AppleScript by bylo sledování obrazovky (zakázáno), pseudo-terminály a `exec > >(tee)` jsou křehké. **Podporovaný způsob = explicitní obal: uživatel sám spustí `pclip <příkaz>`.**
+- `~/.zshrc` už načítá vlastní `~/.pure/bin/clipboard.zsh` (funkce `cliprun`). Zůstává beze změny a funguje vedle `pclip`.
+
+Implementace:
+- `pclip` (zsh funkce v souboru `~/Library/Application Support/PureClipboard/shell/pureclipboard.zsh`): spustí příkaz, výstup (stdout+stderr) zobrazí průběžně (`tee`), po skončení předá soubor pomocnému programu `terminal-copy`; vrací původní návratový kód příkazu; dočasný soubor (0600) se vždy smaže (`always`); bez pomocného programu příkaz prostě proběhne.
+- `terminal-copy`: stejné brány jako hooky (config platná, Auto Copy, přepínač Terminal), čištění výstupu (ANSI/OSC sekvence, přepisování `\r`, řídicí znaky), **sken celého výstupu** na citlivé údaje (i části, která by se při zkrácení ustřihla), zkrácení na posledních 100 000 znaků se značkou, při nenulovém kódu řádek `[exit N]`. Vstup > 4 MB se nekopíruje. Vypíše na stderr jeden řádek o výsledku.
+- Souběh: výslovná akce uživatele není blokována čerstvou kopií agenta, ale sama si schránku „zabere“ (agent do 5 s nepřepíše).
+- Instalace do `.zshrc` jen s plánem a potvrzením: záloha, **pouze připsání** jednoho označeného bloku (`# >>> Pure Clipboard (Terminal) >>>` … `<<<`), žádný stávající řádek se nemění; odebrání vyjme jen blok (obnoví původní soubor); odmítne symbolický odkaz a poškozené/zdvojené značky; kontrola po zápisu s návratem ze zálohy. Sdílený pomocný program se smaže až s poslední integrací.
+- CLI: `install-terminal|uninstall-terminal|status-terminal [--apply] [--settings .zshrc]`, `terminal-copy`.
+- GUI: karta Apple Terminal (stav, plán, instalace/odebrání, test bez zápisu / se schránkou).
+
+Omezení: kopíruje se jen výslovně obalený příkaz (žádné automatické sledování terminálu); přes `pclip` nejdou interaktivní programy (výstup jde přes rouru, bez TTY a barev); Terminal.app GUI nebylo ovládáno (testováno v reálném zsh); karta Terminal v aplikaci nebyla vizuálně zkontrolována (přístup ke screenshotu odmítnut), ověřeno kompilací a logikou.
+
+Další milníky: Pure Remote, Termux, historie schránky.
 
 ## Závazné požadavky na veřejnou distribuci
 

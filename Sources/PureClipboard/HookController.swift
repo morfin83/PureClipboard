@@ -72,7 +72,8 @@ final class HookController {
         error = nil
         notice = nil
         let other: HookTarget = target == .claude ? .codex : .claude
-        let helperStillNeeded = installer(for: other).state().isRegistered
+        let terminal = ZshIntegrationInstaller(paths: .standard(configURL: store.url)).state().isInstalled
+        let helperStillNeeded = installer(for: other).state().isRegistered || terminal
         do {
             let report = try installer.uninstall(removeHelper: !helperStillNeeded)
             notice = report.changed
@@ -99,25 +100,5 @@ final class HookController {
         }
         if !state.isRegistered { text += " Hook ještě není nainstalován, takže sám od sebe nic nezkopíruje." }
         testResult = text
-    }
-}
-
-enum HookReasonLabel {
-    static func text(_ reason: String) -> String {
-        switch reason {
-        case "auto-copy-off": "Auto Copy je vypnutý"
-        case "integration-off": "přepínač integrace je vypnutý"
-        case "config-unavailable": "konfiguraci nelze načíst nebo je neplatná"
-        case "sensitive-content": "podezření na citlivé údaje"
-        case "no-final-message": "událost neobsahuje finální odpověď"
-        case "empty-message": "prázdná odpověď"
-        case "message-too-large", "payload-too-large": "příliš velký text"
-        case "unexpected-event": "jiná událost než Stop"
-        case "invalid-payload": "neplatná data události"
-        case "clipboard-write-failed": "zápis do schránky selhal"
-        case "recent-copy-by-other-session": "jiná relace právě kopírovala (ochrana před přepsáním)"
-        case "lock-unavailable": "schránku právě používá jiný hook"
-        default: reason
-        }
     }
 }

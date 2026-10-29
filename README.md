@@ -1,7 +1,7 @@
 # Pure Clipboard
 
 Nativní macOS aplikace PureStudio pro správu automatického kopírování do schránky.
-Aktuální stav: Milník 2B (GUI, konfigurace, integrace Claude Code a Codex přes Stop hooky; Terminal, Pure Remote a Termux zatím neaktivní). Viz [PLAN.md](PLAN.md).
+Aktuální stav: Milník 2C (GUI, konfigurace, integrace Claude Code a Codex přes Stop hooky a Apple Terminal přes příkaz `pclip`; Pure Remote a Termux zatím neaktivní). Viz [PLAN.md](PLAN.md).
 
 ```bash
 scripts/build-app.sh                         # sestaví build/PureClipboard.app
@@ -40,3 +40,17 @@ Codex Desktop a IDE rozšíření zatím nejsou ověřeny.
 ## Souběh více agentů
 
 Když více relací (Claude Code, Codex) skončí téměř současně, drží schránku ta, která kopírovala první: jiná relace ji během 5 sekund nepřepíše. Zápisy jsou serializované zámkem.
+
+## Apple Terminal: příkaz `pclip`
+
+Terminal.app neposkytuje oficiální událost s výstupem příkazů a čtení okna by bylo sledování obrazovky. Kopíruje se proto jen příkaz, který sami spustíte přes obal:
+
+```bash
+pclip swift build
+```
+
+1. Zapněte **Auto Copy** i **Apple Terminal**.
+2. V kartě „Apple Terminal – příkaz pclip“ klikněte na **Nainstalovat pclip** a potvrďte plán (na konec `~/.zshrc` se po záloze připíše jediný označený blok; vaše řádky se nemění).
+3. Otevřete nové okno Terminálu. Příkaz `pclip` vrací stejný kód jako obalený příkaz; výstup se zkopíruje jen bez hesel a tokenů (při chybě s řádkem `[exit N]`).
+
+Terminálově: `pureclipboard-hook install-terminal --apply` (bez `--apply` jen plán), `status-terminal`, `uninstall-terminal --apply`. Váš stávající `cliprun` zůstává beze změny.

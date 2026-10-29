@@ -48,6 +48,105 @@ func runStop(_ target: HookTarget, _ arguments: [String]) -> Never {
     exit(0)
 }
 
+/// `pclip` entry point: copies the output of one explicitly wrapped command. Prints one line to stderr, never fails the command.
+func runTerminalCopy(_ arguments: [String]) -> Never {
+    signal(SIGALRM) { _ in _exit(0) }
+    alarm(15)
+
+    var exitCode: Int32?
+    var session = "terminal"
+    var iterator = arguments.makeIterator()
+    while let argument = iterator.next() {
+        switch argument {
+        case "--exit": exitCode = iterator.next().flatMap { Int32($0) }
+        case "--session": if let value = iterator.next() { session = value }
+        default: break
+        }
+    }
+
+    let configURL = ConfigFileStore.defaultURL()
+    let handler = TerminalCopyHandler(
+        store: ConfigFileStore(url: configURL),
+        clipboard: SystemClipboard(),
+        claims: ClipboardClaimStore(directory: configURL.deletingLastPathComponent())
+    )
+    let outcome = handler.handle(
+        output: readStandardInput(limit: TerminalCopyHandler.maxInputBytes), exitCode: exitCode, session: session)
+    HookEventRecord.write(outcome, besides: configURL, integration: .terminal)
+    switch outcome.result {
+    case .copied:
+        FileHandle.standardError.write(Data("📋 Pure Clipboard: výstup zkopírován (\(outcome.characters) znaků).\n".utf8))
+    case .skipped:
+        let reason = outcome.reason == "empty-message" ? "no-output" : outcome.reason
+        FileHandle.standardError.write(Data("Pure Clipboard: nekopíruji – \(HookReasonLabel.text(reason)).\n".utf8))
+    }
+    exit(0)
+}
+
+/// True if any integration other than `excluded` still points at the shared helper copy.
+func otherIntegrationRegistered(excluding excluded: String, environment: [String: String], configURL: URL) -> Bool {
+    for target in HookTarget.allCases where target.rawValue != excluded {
+        let installer = ClaudeHookInstaller(paths: .standard(target: target, configURL: configURL, environment: environment), target: target)
+        if installer.state().isRegistered { return true }
+    }
+    if excluded != "terminal",
+       ZshIntegrationInstaller(paths: .standard(configURL: configURL, environment: environment)).state().isInstalled { return true }
+    return false
+}
+
+func runTerminalManagement(action: String, _ arguments: [String]) -> Never {
+    var override: String?
+    var apply = false
+    var iterator = arguments.makeIterator()
+    while let argument = iterator.next() {
+        switch argument {
+        case "--settings", "--zshrc": override = iterator.next()
+        case "--apply": apply = true
+        default: fail("Neznámý parametr: \(argument)")
+        }
+    }
+    let configURL = ConfigFileStore.defaultURL()
+    var environment = ProcessInfo.processInfo.environment
+    if let override { environment["PURECLIPBOARD_ZSHRC_PATH"] = override }
+    let installer = ZshIntegrationInstaller(paths: .standard(configURL: configURL, environment: environment))
+    let selfURL = Bundle.main.executableURL ?? URL(fileURLWithPath: CommandLine.arguments[0])
+
+    do {
+        switch action {
+        case "status":
+            let state = installer.state(bundledHelper: selfURL)
+            printLine("integrace:  Apple Terminal (příkaz pclip)")
+            printLine(".zshrc:     \(installer.paths.zshrc.path)\(state.zshrcExists ? "" : " (neexistuje)")")
+            printLine("blok:       \(state.blockPresent ? "přidán" : "nepřidán")")
+            printLine("skript:     \(state.snippetInstalled ? installer.paths.snippet.path : "není nainstalován")")
+            if let current = state.snippetCurrent { printLine("aktuální:   \(current ? "ano" : "ne – spusťte install-terminal --apply")") }
+            printLine("helper:     \(state.helperInstalled ? installer.paths.helper.path : "není nainstalován")")
+            if let problem = state.problem { printLine("problém:    \(problem)") }
+            for note in state.notes { printLine("poznámka:   \(note)") }
+        case "install", "uninstall":
+            let report = action == "install"
+                ? try installer.install(bundledHelper: selfURL, dryRun: !apply)
+                : try installer.uninstall(
+                    dryRun: !apply,
+                    removeHelper: !otherIntegrationRegistered(excluding: "terminal", environment: environment, configURL: configURL))
+            if report.steps.isEmpty { printLine("Není co měnit.") }
+            for step in report.steps { printLine("• \(step)") }
+            if !apply {
+                if report.changed { printLine("Nic se nezměnilo. Pro provedení přidejte --apply.") }
+            } else if report.changed {
+                if let backup = report.backup { printLine("Záloha: \(backup.path)") }
+                printLine("Hotovo.")
+                if action == "install" { printLine("Otevřete nové okno Terminálu (nebo spusťte: source ~/.zshrc) a zkuste: pclip echo test") }
+            }
+        default:
+            fail("Neznámý příkaz")
+        }
+    } catch {
+        fail(error.localizedDescription)
+    }
+    exit(0)
+}
+
 func runManagement(action: String, target: HookTarget, _ arguments: [String]) -> Never {
     var settingsOverride: String?
     var apply = false
@@ -69,7 +168,6 @@ func runManagement(action: String, target: HookTarget, _ arguments: [String]) ->
         ClaudeHookInstaller(paths: .standard(target: target, configURL: configURL, environment: environment), target: target)
     }
     let current = installer(for: target)
-    let sibling = installer(for: target == .claude ? .codex : .claude)
     let selfURL = Bundle.main.executableURL ?? URL(fileURLWithPath: CommandLine.arguments[0])
 
     do {
@@ -92,7 +190,9 @@ func runManagement(action: String, target: HookTarget, _ arguments: [String]) ->
             // The helper copy is shared; only the last remaining integration may delete it.
             let report = action == "install"
                 ? try current.install(bundledHelper: selfURL, dryRun: !apply)
-                : try current.uninstall(dryRun: !apply, removeHelper: !sibling.state().isRegistered)
+                : try current.uninstall(
+                    dryRun: !apply,
+                    removeHelper: !otherIntegrationRegistered(excluding: target.rawValue, environment: environment, configURL: configURL))
             if report.steps.isEmpty { printLine("Není co měnit.") }
             for step in report.steps { printLine("• \(step)") }
             if !apply {
@@ -122,22 +222,25 @@ case "claude-stop":
     runStop(.claude, rest)
 case "codex-stop":
     runStop(.codex, rest)
+case "terminal-copy":
+    runTerminalCopy(rest)
 case "version":
     printLine(PureClipboardVersion.string)
 default:
     let parts = command.split(separator: "-", maxSplits: 1).map(String.init)
-    if parts.count == 2, ["install", "uninstall", "status"].contains(parts[0]),
-       let target = HookTarget(rawValue: parts[1]) {
-        runManagement(action: parts[0], target: target, rest)
+    if parts.count == 2, ["install", "uninstall", "status"].contains(parts[0]) {
+        if parts[1] == "terminal" { runTerminalManagement(action: parts[0], rest) }
+        if let target = HookTarget(rawValue: parts[1]) { runManagement(action: parts[0], target: target, rest) }
     }
     printLine("""
     pureclipboard-hook \(PureClipboardVersion.string)
     Použití:
       claude-stop | codex-stop          hook pro událost Stop (čte JSON ze stdin)
-      status-claude | status-codex      stav integrace
-      install-claude | install-codex    bez --apply pouze ukáže plán
-      uninstall-claude | uninstall-codex  bez --apply pouze ukáže plán
-      volitelně: --settings CESTA       jiný soubor (settings.json / hooks.json)
+      terminal-copy [--exit N]          zkopíruje výstup příkazu ze stdin (volá funkce pclip)
+      status-<claude|codex|terminal>    stav integrace
+      install-<claude|codex|terminal>   bez --apply pouze ukáže plán
+      uninstall-<claude|codex|terminal> bez --apply pouze ukáže plán
+      volitelně: --settings CESTA       jiný soubor (settings.json / hooks.json / .zshrc)
     """)
     exit(arguments.isEmpty ? 0 : 2)
 }

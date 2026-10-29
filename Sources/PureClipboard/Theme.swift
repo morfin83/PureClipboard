@@ -70,3 +70,44 @@ struct IconTile: View {
             )
     }
 }
+
+struct InfoRow: View {
+    let label: String
+    let value: String
+    var color: Color = Theme.primaryText
+    var mono = false
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(label)
+                .font(.system(size: 12))
+                .foregroundStyle(Theme.secondaryText)
+                .frame(width: 120, alignment: .leading)
+            Text(value)
+                .font(mono ? .system(size: 12, design: .monospaced) : .system(size: 12))
+                .foregroundStyle(color)
+                .textSelection(.enabled)
+                .lineLimit(2)
+            Spacer(minLength: 0)
+        }
+    }
+}
+
+struct NoticeBox: View {
+    let message: String
+    let color: Color
+    var icon = "exclamationmark.triangle.fill"
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: icon).foregroundStyle(color)
+            Text(message)
+                .font(.system(size: 12))
+                .foregroundStyle(Theme.primaryText)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .padding(10)
+        .background(color.opacity(0.10), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+    }
+}

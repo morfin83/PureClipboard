@@ -22,8 +22,9 @@ struct ContentView: View {
                     }
                     HookCard(target: .claude)
                     HookCard(target: .codex)
+                    TerminalCard()
                     ConfigStatusCard()
-                    Text("Milník 2B · Aplikace sama nespouští žádné procesy ani služby")
+                    Text("Milník 2C · Aplikace sama nespouští žádné procesy ani služby")
                         .font(.system(size: 11))
                         .foregroundStyle(Theme.tertiaryText)
                         .padding(.top, 4)
@@ -80,10 +81,10 @@ private struct PreviewNotice: View {
                 .foregroundStyle(Theme.warning)
                 .font(.system(size: 15))
             VStack(alignment: .leading, spacing: 3) {
-                Text("Aktivní jsou Claude Code a Codex")
+                Text("Aktivní jsou Claude Code, Codex a Apple Terminal")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Theme.primaryText)
-                Text("Claude Code a Codex kopírují po nainstalování hooku (karty níže). Přepínače Apple Terminal, Pure Remote a Termux zatím jen mění uloženou konfiguraci a nic nedělají.")
+                Text("Claude Code a Codex kopírují po nainstalování hooku, Apple Terminal přes příkaz pclip (karty níže). Přepínače Pure Remote a Termux zatím jen mění uloženou konfiguraci a nic nedělají.")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
@@ -152,6 +153,7 @@ extension IntegrationsCard {
         switch id {
         case .claudeCode: target = .claude
         case .codex: target = .codex
+        case .terminal: return model.terminal.state.isInstalled ? "Příkaz pclip nainstalován" : "Příkaz pclip nenainstalován"
         default: return "Neaktivní"
         }
         let hook = model.controller(for: target).state
@@ -190,7 +192,7 @@ private struct IntegrationRow: View {
             Spacer()
             Text(trailing)
                 .font(.system(size: 10.5, weight: .medium))
-                .foregroundStyle(trailing == "Hook nainstalován" ? Theme.accent : Theme.tertiaryText)
+                .foregroundStyle(trailing.hasSuffix(" nainstalován") && !trailing.contains("nenainstalován") ? Theme.accent : Theme.tertiaryText)
             Toggle(id.displayName, isOn: Binding(get: { settings.enabled }, set: onChange))
                 .labelsHidden()
                 .toggleStyle(.switch)

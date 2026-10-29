@@ -12,22 +12,30 @@ HELPER="${1:-$ROOT/build/PureClipboard.app/Contents/MacOS/pureclipboard-hook}"
 [[ -x "$HELPER" ]] || { echo "Helper not found: $HELPER (run scripts/build-app.sh)" >&2; exit 2; }
 
 T="$(mktemp -d)"
+ZSHRC_HASH="$(shasum -a 256 < ~/.zshrc)"
 pbpaste > "$T/clipboard.orig"
 trap 'pbcopy < "$T/clipboard.orig"; rm -rf "$T"' EXIT
 
 export PURECLIPBOARD_CONFIG_PATH="$T/config.json"
+# Never look at (or touch) the real hook/settings files: point every integration at nonexistent temp paths.
+isolate() {
+  export PURECLIPBOARD_CLAUDE_SETTINGS_PATH="$T/isolated-claude-settings.json"
+  export PURECLIPBOARD_CODEX_HOOKS_PATH="$T/isolated-codex-hooks.json"
+  export PURECLIPBOARD_ZSHRC_PATH="$T/isolated-zshrc"
+}
+isolate
 pass=0; fail=0
 check() { # name, condition-result
   if [[ "$2" == "ok" ]]; then pass=$((pass+1)); echo "  PASS  $1"; else fail=$((fail+1)); echo "  FAIL  $1"; fi
 }
-write_config() { # autoCopy claude protect [codex]
-  python3 -I - "$T/config.json" "$1" "$2" "$3" "${4:-0}" <<'EOF'
+write_config() { # autoCopy claude protect [codex] [terminal]
+  python3 -I - "$T/config.json" "$1" "$2" "$3" "${4:-0}" "${5:-0}" <<'EOF'
 import json, sys
-path, auto, claude, protect, codex = sys.argv[1], sys.argv[2] == "1", sys.argv[3] == "1", sys.argv[4] == "1", sys.argv[5] == "1"
+path, auto, claude, protect, codex, terminal = sys.argv[1], sys.argv[2] == "1", sys.argv[3] == "1", sys.argv[4] == "1", sys.argv[5] == "1", sys.argv[6] == "1"
 modes = {"terminal": "diagnostics", "claudeCode": "finalResponse", "codex": "finalResponse", "pureRemote": "actionResults", "termux": "localClipboard"}
 cfg = {"schemaVersion": 1, "futureKey": {"keep": True},
        "global": {"autoCopy": auto, "historyLimit": 20, "protectSensitiveData": protect},
-       "integrations": {k: {"enabled": ((k == "claudeCode" and claude) or (k == "codex" and codex)), "mode": m} for k, m in modes.items()}}
+       "integrations": {k: {"enabled": ((k == "claudeCode" and claude) or (k == "codex" and codex) or (k == "terminal" and terminal)), "mode": m} for k, m in modes.items()}}
 open(path, "w").write(json.dumps(cfg, indent=2))
 EOF
   chmod 600 "$T/config.json"
@@ -175,9 +183,61 @@ export PURECLIPBOARD_CODEX_HOOKS_PATH="$H" PURECLIPBOARD_CLAUDE_SETTINGS_PATH="$
 "$HELPER" uninstall-claude --apply >/dev/null
 check "shared helper survives removing Claude while Codex is installed" "$([[ -x "$T/bin/pureclipboard-hook" ]] && echo ok)"
 "$HELPER" uninstall-codex --apply >/dev/null
-unset PURECLIPBOARD_CODEX_HOOKS_PATH PURECLIPBOARD_CLAUDE_SETTINGS_PATH
+isolate
 check "uninstall-codex restores original JSON" "$(python3 -I -c 'import json,sys; sys.exit(json.load(open(sys.argv[1]))!=json.load(open(sys.argv[2])))' "$H" "$T/hooks.orig" && echo ok)"
 check "helper removed with the last integration" "$([[ ! -e "$T/bin/pureclipboard-hook" ]] && echo ok)"
+
+echo "== 12. Terminal: pclip in a real zsh against the real clipboard"
+write_config 1 0 1 0 1; rm -f "$T"/last-event*.json "$T"/clipboard-claim.json
+Z="$T/zshrc"
+print -r -- 'export PATH="$PATH:/usr/local/bin"' > "$Z"; print -r -- 'source "$HOME/.pure/bin/clipboard.zsh"' >> "$Z"; chmod 644 "$Z"; cp "$Z" "$T/zshrc.orig"
+"$HELPER" install-terminal --settings "$Z" >/dev/null
+check "dry run changes nothing" "$(cmp -s "$Z" "$T/zshrc.orig" && echo ok)"
+"$HELPER" install-terminal --settings "$Z" --apply >/dev/null; code=$?
+check "install-terminal --apply succeeds" "$([[ $code -eq 0 ]] && echo ok)"
+check "existing .zshrc lines kept in place" "$(head -n 2 "$Z" | cmp -s - "$T/zshrc.orig" && echo ok)"
+check "backup equals original" "$(cmp -s "$T"/backups/zshrc-* "$T/zshrc.orig" && echo ok)"
+status_out="$("$HELPER" status-terminal --settings "$Z")"
+check "status-terminal reports the block" "$(grep -q 'blok: *přidán' <<< "$status_out" && echo ok)"
+PC="$T/shell/pureclipboard.zsh"
+check "snippet is valid zsh" "$(zsh -n "$PC" && echo ok)"
+
+s="$(sentinel)"
+out="$(zsh -f -c "source '$PC'; pclip sh -c 'echo Neškodný výstup příkazu; exit 0'" 2>"$T/pclip.err")"; code=$?
+check "pclip passes output through and returns 0" "$([[ $code -eq 0 && "$out" == 'Neškodný výstup příkazu' ]] && echo ok)"
+check "clipboard holds the command output" "$([[ "$(pbpaste)" == 'Neškodný výstup příkazu' ]] && echo ok)"
+check "user told about the copy on stderr" "$(grep -q 'zkopírován' "$T/pclip.err" && echo ok)"
+EVENT_FILE="$T/last-event-terminal.json"
+check "terminal event recorded" "$([[ "$(event_field result)" == copied && "$(event_field integration)" == terminal ]] && echo ok)"
+unset EVENT_FILE
+
+zsh -f -c "source '$PC'; pclip sh -c 'echo chyba v buildu >&2; exit 5'" >/dev/null 2>&1; code=$?
+check "failing command keeps its exit code" "$([[ $code -eq 5 ]] && echo ok)"
+check "failure output gets the exit footer" "$([[ "$(pbpaste)" == $'chyba v buildu\n[exit 5]' ]] && echo ok)"
+
+s="$(sentinel)"; zsh -f -c "source '$PC'; pclip sh -c 'echo GITHUB_TOKEN=$fake'" >/dev/null 2>"$T/pclip.err"
+check "sensitive output is not copied" "$([[ "$(pbpaste)" == "$s" ]] && echo ok)"
+check "event never contains the secret" "$(grep -q "$fake" "$T/last-event-terminal.json" || echo ok)"
+
+write_config 1 0 1 0 0; rm -f "$T/last-event-terminal.json"
+s="$(sentinel)"; zsh -f -c "source '$PC'; pclip echo vypnuto" >/dev/null 2>&1
+check "Terminal switch off: clipboard unchanged, no trace" "$([[ "$(pbpaste)" == "$s" && ! -e "$T/last-event-terminal.json" ]] && echo ok)"
+write_config 0 0 1 0 1
+s="$(sentinel)"; zsh -f -c "source '$PC'; pclip echo vypnuto" >/dev/null 2>&1
+check "Auto Copy off: clipboard unchanged" "$([[ "$(pbpaste)" == "$s" ]] && echo ok)"
+
+write_config 1 0 1 1 1; rm -f "$T"/clipboard-claim.json
+zsh -f -c "source '$PC'; pclip echo moje výslovná kopie" >/dev/null 2>&1
+run_codex Stop 'Agent skončil těsně po mně' B >/dev/null
+check "agent right after pclip cannot overwrite it" "$([[ "$(pbpaste)" == 'moje výslovná kopie' ]] && echo ok)"
+
+print -r -- 'echo ahoj' | zsh -f -c "source '$PC'; pclip" >/dev/null 2>&1; code=$?
+check "pclip without a command exits 2" "$([[ $code -eq 2 ]] && echo ok)"
+
+"$HELPER" uninstall-terminal --settings "$Z" --apply >/dev/null
+check "uninstall-terminal restores .zshrc byte for byte" "$(cmp -s "$Z" "$T/zshrc.orig" && echo ok)"
+check "snippet and helper removed" "$([[ ! -e "$PC" && ! -e "$T/bin/pureclipboard-hook" ]] && echo ok)"
+check "real ~/.zshrc untouched by this run" "$([[ "$(shasum -a 256 < ~/.zshrc)" == "$ZSHRC_HASH" ]] && echo ok)"
 
 echo
 echo "Passed: $pass  Failed: $fail"

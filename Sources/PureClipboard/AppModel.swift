@@ -22,6 +22,7 @@ final class AppModel {
 
     let claude: HookController
     let codex: HookController
+    let terminal: TerminalController
 
     private var document: ConfigDocument?
     private var fingerprint: String?
@@ -30,6 +31,7 @@ final class AppModel {
         self.store = store
         claude = HookController(target: .claude, store: store)
         codex = HookController(target: .codex, store: store)
+        terminal = TerminalController(store: store)
         reload()
     }
 
@@ -38,6 +40,7 @@ final class AppModel {
     func refreshHooks() {
         claude.refresh()
         codex.refresh()
+        terminal.refresh()
     }
 
     var configPath: String {
