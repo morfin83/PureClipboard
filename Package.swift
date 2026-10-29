@@ -6,11 +6,16 @@ let package = Package(
     platforms: [.macOS(.v14)],
     products: [
         .executable(name: "PureClipboard", targets: ["PureClipboard"]),
+        .executable(name: "pureclipboard-hook", targets: ["pureclipboard-hook"]),
     ],
     targets: [
         .target(name: "PureClipboardCore"),
         .executableTarget(
             name: "PureClipboard",
+            dependencies: ["PureClipboardCore"]
+        ),
+        .executableTarget(
+            name: "pureclipboard-hook",
             dependencies: ["PureClipboardCore"]
         ),
         .testTarget(

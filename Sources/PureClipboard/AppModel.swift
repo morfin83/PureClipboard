@@ -20,12 +20,78 @@ final class AppModel {
     private(set) var lastSaved: Date?
     private(set) var saveError: ConfigError?
 
+    private(set) var hookState = ClaudeHookState()
+    private(set) var hookEvent: HookEventRecord?
+    private(set) var hookError: String?
+    private(set) var hookNotice: String?
+
     private var document: ConfigDocument?
     private var fingerprint: String?
 
     init(store: ConfigFileStore) {
         self.store = store
         reload()
+    }
+
+    // MARK: Claude Code hook
+
+    private var installer: ClaudeHookInstaller {
+        ClaudeHookInstaller(paths: .standard(configURL: store.url))
+    }
+
+    /// The helper shipped inside this app bundle; nil when running outside a bundle.
+    var bundledHelper: URL? {
+        let url = Bundle.main.executableURL?.deletingLastPathComponent().appendingPathComponent(ClaudeHookInstaller.helperName)
+        return url.flatMap { FileManager.default.isExecutableFile(atPath: $0.path) ? $0 : nil }
+    }
+
+    var settingsPath: String { (installer.paths.settings.path as NSString).abbreviatingWithTildeInPath }
+
+    func refreshHook() {
+        hookState = installer.state(bundledHelper: bundledHelper)
+        hookEvent = HookEventRecord.read(besides: store.url)
+    }
+
+    /// Human-readable list of exactly what installing would change. Writes nothing.
+    func hookInstallPlan() -> [String] {
+        guard let helper = bundledHelper else { return ["Pomocný program hooku v aplikaci nebyl nalezen."] }
+        do {
+            return try installer.install(bundledHelper: helper, dryRun: true).steps
+        } catch {
+            return [error.localizedDescription]
+        }
+    }
+
+    func installHook() {
+        hookError = nil
+        hookNotice = nil
+        guard let helper = bundledHelper else {
+            hookError = ClaudeHookError.helperMissing("Contents/MacOS/\(ClaudeHookInstaller.helperName)").localizedDescription
+            return
+        }
+        do {
+            let report = try installer.install(bundledHelper: helper)
+            hookNotice = report.changed
+                ? "Hook nainstalován." + (report.backup.map { " Záloha: \($0.lastPathComponent)" } ?? "")
+                : "Hook už byl nainstalován, není co měnit."
+        } catch {
+            hookError = error.localizedDescription
+        }
+        refreshHook()
+    }
+
+    func removeHook() {
+        hookError = nil
+        hookNotice = nil
+        do {
+            let report = try installer.uninstall()
+            hookNotice = report.changed
+                ? "Hook odebrán." + (report.backup.map { " Záloha: \($0.lastPathComponent)" } ?? "")
+                : "Hook nebyl nainstalován."
+        } catch {
+            hookError = error.localizedDescription
+        }
+        refreshHook()
     }
 
     var configPath: String {
@@ -36,6 +102,7 @@ final class AppModel {
 
     func reload() {
         saveError = nil
+        refreshHook()
         do {
             let loaded = try store.load()
             apply(loaded)

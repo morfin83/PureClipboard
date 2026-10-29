@@ -20,8 +20,9 @@ struct ContentView: View {
                             SensitiveDataCard(config: config)
                         }
                     }
+                    ClaudeHookCard()
                     ConfigStatusCard()
-                    Text("Milník 1 · Aplikace nespouští žádné procesy ani služby")
+                    Text("Milník 2A · Aplikace sama nespouští žádné procesy ani služby")
                         .font(.system(size: 11))
                         .foregroundStyle(Theme.tertiaryText)
                         .padding(.top, 4)
@@ -32,6 +33,9 @@ struct ContentView: View {
             }
         }
         .tint(Theme.accent)
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            model.refreshHook()
+        }
     }
 }
 
@@ -75,10 +79,10 @@ private struct PreviewNotice: View {
                 .foregroundStyle(Theme.warning)
                 .font(.system(size: 15))
             VStack(alignment: .leading, spacing: 3) {
-                Text("Integrace zatím nejsou aktivní")
+                Text("Aktivní je pouze Claude Code")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Theme.primaryText)
-                Text("V tomto milníku přepínače pouze mění uloženou konfiguraci. Nic se nekopíruje automaticky a nespouští se žádné procesy.")
+                Text("Claude Code kopíruje po nainstalování hooku (karta níže). Přepínače Apple Terminal, Codex, Pure Remote a Termux zatím jen mění uloženou konfiguraci a nic nedělají.")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
@@ -104,7 +108,7 @@ private struct AutoCopyCard: View {
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(Theme.primaryText)
                     Text(config.global.autoCopy
-                         ? "Zapnuto v konfiguraci – zatím bez účinku"
+                         ? "Zapnuto – kopírují integrace, které jsou zapnuté a aktivní"
                          : "Vypnuto – žádná integrace nebude kopírovat")
                         .font(.system(size: 12))
                         .foregroundStyle(Theme.secondaryText)
@@ -123,8 +127,8 @@ private struct AutoCopyCard: View {
     }
 }
 
-private struct IntegrationsCard: View {
-    @Environment(AppModel.self) private var model
+struct IntegrationsCard: View {
+    @Environment(AppModel.self) var model
     let config: PureClipboardConfig
 
     var body: some View {
@@ -132,7 +136,7 @@ private struct IntegrationsCard: View {
             VStack(spacing: 0) {
                 ForEach(Array(IntegrationID.allCases.enumerated()), id: \.element) { index, id in
                     if index > 0 { Divider().overlay(Theme.cardBorder) }
-                    IntegrationRow(id: id, settings: config.integrations[id], masterOn: config.global.autoCopy) { value in
+                    IntegrationRow(id: id, settings: config.integrations[id], masterOn: config.global.autoCopy, trailing: trailing(for: id)) { value in
                         model.update { $0.integrations[id].enabled = value }
                     }
                 }
@@ -141,10 +145,21 @@ private struct IntegrationsCard: View {
     }
 }
 
+extension IntegrationsCard {
+    func trailing(for id: IntegrationID) -> String {
+        guard id == .claudeCode else { return "Neaktivní" }
+        let hook = model.hookState
+        if !hook.isRegistered { return "Hook nenainstalován" }
+        if hook.hooksDisabled { return "Hooky vypnuty v Claude" }
+        return "Hook nainstalován"
+    }
+}
+
 private struct IntegrationRow: View {
     let id: IntegrationID
     let settings: IntegrationSettings
     let masterOn: Bool
+    let trailing: String
     let onChange: @MainActor @Sendable (Bool) -> Void
 
     var body: some View {
@@ -167,9 +182,9 @@ private struct IntegrationRow: View {
                     .foregroundStyle(Theme.secondaryText)
             }
             Spacer()
-            Text("Neaktivní")
+            Text(trailing)
                 .font(.system(size: 10.5, weight: .medium))
-                .foregroundStyle(Theme.tertiaryText)
+                .foregroundStyle(trailing == "Hook nainstalován" ? Theme.accent : Theme.tertiaryText)
             Toggle(id.displayName, isOn: Binding(get: { settings.enabled }, set: onChange))
                 .labelsHidden()
                 .toggleStyle(.switch)
