@@ -223,8 +223,10 @@ write_config 1 0 1 0 0; rm -f "$T/last-event-terminal.json"
 s="$(sentinel)"; zsh -f -c "source '$PC'; pclip echo vypnuto" >/dev/null 2>&1
 check "Terminal switch off: clipboard unchanged, no trace" "$([[ "$(pbpaste)" == "$s" && ! -e "$T/last-event-terminal.json" ]] && echo ok)"
 write_config 0 0 1 0 1
-s="$(sentinel)"; zsh -f -c "source '$PC'; pclip echo vypnuto" >/dev/null 2>&1
-check "Auto Copy off: clipboard unchanged" "$([[ "$(pbpaste)" == "$s" ]] && echo ok)"
+sentinel >/dev/null; zsh -f -c "source '$PC'; pclip echo vypnuto" >/dev/null 2>&1
+check "Auto Copy off: explicit pclip still copies" "$([[ "$(pbpaste)" == vypnuto ]] && echo ok)"
+run Stop 'Agent nesmí přepsat ruční kopii' >/dev/null
+check "Auto Copy off: Claude hook remains inactive" "$([[ "$(pbpaste)" == vypnuto ]] && echo ok)"
 
 write_config 1 0 1 1 1; rm -f "$T"/clipboard-claim.json
 zsh -f -c "source '$PC'; pclip echo moje výslovná kopie" >/dev/null 2>&1

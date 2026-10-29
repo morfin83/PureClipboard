@@ -30,7 +30,8 @@ public enum TerminalOutputSanitizer {
 }
 
 /// Copies the output of one command that the user explicitly ran through the `pclip` wrapper.
-/// Same gates and scanner as the agent hooks; fails closed on anything unexpected.
+/// Explicit copies are independent of the automatic hook switch, but still require
+/// the Terminal integration and the configured sensitive-data protection.
 public struct TerminalCopyHandler {
     public static let maxInputBytes = 4 * 1024 * 1024
     public static let maxCopiedCharacters = 100_000
@@ -57,7 +58,6 @@ public struct TerminalCopyHandler {
         } catch {
             return .skipped("config-unavailable", record: false)
         }
-        guard config.global.autoCopy else { return .skipped("auto-copy-off", record: false) }
         guard config.integrations.terminal.enabled else { return .skipped("integration-off", record: false) }
 
         guard output.count <= Self.maxInputBytes else { return .skipped("payload-too-large") }

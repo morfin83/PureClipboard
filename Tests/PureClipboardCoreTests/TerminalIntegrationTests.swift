@@ -66,14 +66,29 @@ private func bytes(_ s: String) -> Data { Data(s.utf8) }
         #expect(c.writes == ["error: boom\n[exit 2]"])
     }
 
-    @Test func switchesAreRespected() throws {
+    @Test func explicitCopyWorksWithAutoCopyOffAndRespectsTerminalSwitch() throws {
         let master = try Support(autoCopy: false); let c = FakeClipboard()
         let a = handler(master, c).handle(output: bytes("text"), exitCode: 0, session: "x")
-        #expect(a.reason == "auto-copy-off" && !a.shouldRecord)
+        #expect(a.result == .copied)
+        #expect(c.writes == ["text"])
         let off = try Support(terminal: false)
         let b = handler(off, c).handle(output: bytes("text"), exitCode: 0, session: "x")
         #expect(b.reason == "integration-off" && !b.shouldRecord)
-        #expect(c.writes.isEmpty)
+        #expect(c.writes == ["text"])
+    }
+
+    @Test func autoCopyOffStillDisablesAgentHooks() throws {
+        let s = try Support(autoCopy: false); let c = FakeClipboard()
+        var loaded = try s.store.load()
+        loaded.document.config.integrations.claudeCode.enabled = true
+        try s.store.save(loaded.document, expectedFingerprint: loaded.fingerprint)
+        let payload = try JSONSerialization.data(withJSONObject: [
+            "hook_event_name": "Stop", "last_assistant_message": "odpověď"
+        ])
+        let agent = StopHookHandler(store: s.store, clipboard: c, integration: .claudeCode)
+        #expect(agent.handle(stdin: payload).reason == "auto-copy-off")
+        #expect(handler(s, c).handle(output: bytes("výslovný příkaz"), exitCode: 0, session: "x").result == .copied)
+        #expect(c.writes == ["výslovný příkaz"])
     }
 
     @Test func terminalSwitchIsIndependentOfOtherIntegrations() throws {

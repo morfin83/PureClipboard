@@ -70,8 +70,8 @@ public struct ZshIntegrationInstaller: Sendable {
         return """
         # Pure Clipboard – integrace Terminálu (generováno aplikací Pure Clipboard \(PureClipboardVersion.string)).
         # Příkaz `\(functionName) příkaz [argumenty…]` spustí příkaz, zobrazí jeho výstup a po skončení
-        # ho zkopíruje do schránky, pokud to dovoluje nastavení Pure Clipboard (Auto Copy + Terminal)
-        # a výstup neobsahuje citlivé údaje. Nic jiného se v terminálu nesleduje.
+        # ho zkopíruje do schránky, pokud je zapnutá integrace Terminal
+        # a kontrola citlivých údajů jej dovolí. Nic jiného se v terminálu nesleduje.
         \(functionName)() {
           emulate -L zsh
           if (( $# == 0 )); then

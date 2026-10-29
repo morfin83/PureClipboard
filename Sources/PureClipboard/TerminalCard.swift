@@ -15,7 +15,7 @@ struct TerminalCard: View {
         Card(title: "Apple Terminal – příkaz pclip", symbol: "apple.terminal") {
             VStack(alignment: .leading, spacing: 12) {
                 HStack { statusPill(state); Spacer() }
-                Text("Terminal.app nepředává výstup příkazů žádnému oficiálnímu hooku, a čtení okna nebo historie by bylo sledování obrazovky. Proto se kopíruje jen výstup příkazu, který sami spustíte přes pclip: pclip swift build. Kopíruje se jen při zapnutém Auto Copy a Terminal, bez hesel a tokenů; při chybovém kódu se připojí řádek [exit N].")
+                Text("Terminal.app nepředává výstup příkazů žádnému oficiálnímu hooku, a čtení okna nebo historie by bylo sledování obrazovky. Proto se kopíruje jen výstup příkazu, který sami spustíte přes pclip: pclip swift build. Stačí zapnutá integrace Terminal; Auto Copy může zůstat vypnuté. Citlivé údaje se při zapnuté ochraně nekopírují; při chybovém kódu se připojí řádek [exit N].")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)

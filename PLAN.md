@@ -62,6 +62,14 @@ Implementace:
 
 Omezení: kopíruje se jen výslovně obalený příkaz (žádné automatické sledování terminálu); přes `pclip` nejdou interaktivní programy (výstup jde přes rouru, bez TTY a barev); Terminal.app GUI nebylo ovládáno (testováno v reálném zsh); karta Terminal v aplikaci nebyla vizuálně zkontrolována (přístup ke screenshotu odmítnut), ověřeno kompilací a logikou.
 
+## Milník 2D — ruční přenos mezi AI aplikacemi ✅
+
+- Režim „až na můj pokyn“: Auto Copy vypne automatické hooky Claude Code a Codexu, ale nezakazuje ruční kopírování přes macOS ani výslovný příkaz `pclip`.
+- Označený text se mezi ChatGPT, Claude, Gemini, Terminálem a dalšími aplikacemi přenáší pomocí systémových `⌘C`, `⌘Tab`, `⌘V`. Celá odpověď se kopíruje tlačítkem zdrojové aplikace; Claude Code v terminálu nabízí `/copy`. Pure Clipboard nesleduje schránku ani obrazovku jiných aplikací.
+- `pclip` nyní vyžaduje platnou konfiguraci a zapnutou integraci Terminal, dále zachovává sken citlivých údajů, limity a zámek schránky. Auto Copy jej neblokuje.
+- GUI vysvětluje rozdíl mezi automatickým a ručním kopírováním. Testy ověřují, že vypnuté Auto Copy stále blokuje hooky, ale dovolí výslovný `pclip`.
+- Pro skutečné použití `pclip` je nutná jeho instalace z aplikace nebo pomocí `install-terminal --apply` po zobrazení plánu; instalace mění pouze vlastní označený blok v `~/.zshrc` a vlastní skript Pure Clipboard, se zálohou.
+
 Další milníky: Pure Remote, Termux, historie schránky.
 
 ## Závazné požadavky na veřejnou distribuci

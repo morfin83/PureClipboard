@@ -24,7 +24,7 @@ struct ContentView: View {
                     HookCard(target: .codex)
                     TerminalCard()
                     ConfigStatusCard()
-                    Text("Milník 2C · Aplikace sama nespouští žádné procesy ani služby")
+                    Text("Milník 2D · Aplikace sama nespouští žádné procesy ani služby")
                         .font(.system(size: 11))
                         .foregroundStyle(Theme.tertiaryText)
                         .padding(.top, 4)
@@ -81,10 +81,10 @@ private struct PreviewNotice: View {
                 .foregroundStyle(Theme.warning)
                 .font(.system(size: 15))
             VStack(alignment: .leading, spacing: 3) {
-                Text("Aktivní jsou Claude Code, Codex a Apple Terminal")
+                Text("Claude Code, Codex a Apple Terminal jsou připravené")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Theme.primaryText)
-                Text("Claude Code a Codex kopírují po nainstalování hooku, Apple Terminal přes příkaz pclip (karty níže). Přepínače Pure Remote a Termux zatím jen mění uloženou konfiguraci a nic nedělají.")
+                Text("Claude Code a Codex kopírují automaticky jen při zapnutém Auto Copy. Apple Terminal kopíruje po instalaci příkazu pclip a jeho výslovném spuštění. Přepínače Pure Remote a Termux zatím jen mění uloženou konfiguraci a nic nedělají.")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
@@ -102,7 +102,7 @@ private struct AutoCopyCard: View {
     let config: PureClipboardConfig
 
     var body: some View {
-        Card(title: "Hlavní přepínač", symbol: "power") {
+        Card(title: "Automatické kopírování", symbol: "power") {
             HStack(spacing: 14) {
                 IconTile(symbol: "doc.on.doc", active: config.global.autoCopy)
                 VStack(alignment: .leading, spacing: 3) {
@@ -110,8 +110,8 @@ private struct AutoCopyCard: View {
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(Theme.primaryText)
                     Text(config.global.autoCopy
-                         ? "Zapnuto – kopírují integrace, které jsou zapnuté a aktivní"
-                         : "Vypnuto – žádná integrace nebude kopírovat")
+                         ? "Zapnuto – Claude Code a Codex kopírují po dokončení odpovědi"
+                         : "Vypnuto – agenti sami nekopírují; ruční kopírování funguje dál")
                         .font(.system(size: 12))
                         .foregroundStyle(Theme.secondaryText)
                 }
@@ -203,6 +203,8 @@ private struct IntegrationRow: View {
 
     private var statusText: String {
         if !settings.enabled { return "\(id.summary) · vypnuto" }
+        if id == .terminal { return "\(id.summary) · na příkaz pclip" }
+        if id == .pureRemote || id == .termux { return "\(id.summary) · zatím neaktivní" }
         return masterOn ? "\(id.summary) · povoleno v konfiguraci" : "\(id.summary) · čeká na Auto Copy"
     }
 }
