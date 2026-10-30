@@ -7,6 +7,8 @@ public struct PureClipboardConfig: Codable, Equatable, Sendable {
     public var schemaVersion: Int
     public var global: GlobalSettings
     public var integrations: Integrations
+    /// Added in 0.7.0. Absent in older files, in which case history stays off.
+    public var clipboardHistory: ClipboardHistorySettings = .defaults
 
     public static let defaults = PureClipboardConfig(
         schemaVersion: supportedSchemaVersion,
@@ -37,7 +39,18 @@ public struct PureClipboardConfig: Codable, Equatable, Sendable {
                 issues.append("integrations.\(id.rawValue).mode má neplatnou hodnotu „\(mode)“.")
             }
         }
+        issues += clipboardHistory.validationIssues()
         return issues
+    }
+}
+
+extension PureClipboardConfig {
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        schemaVersion = try c.decode(Int.self, forKey: .schemaVersion)
+        global = try c.decode(GlobalSettings.self, forKey: .global)
+        integrations = try c.decode(Integrations.self, forKey: .integrations)
+        clipboardHistory = try c.decodeIfPresent(ClipboardHistorySettings.self, forKey: .clipboardHistory) ?? .defaults
     }
 }
 

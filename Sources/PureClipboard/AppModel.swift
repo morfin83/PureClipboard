@@ -25,6 +25,7 @@ final class AppModel {
     let terminal: TerminalController
     let termux: TermuxController
     let remote = RemoteController()
+    let history: HistoryController
 
     private var document: ConfigDocument?
     private var fingerprint: String?
@@ -35,6 +36,7 @@ final class AppModel {
         codex = HookController(target: .codex, store: store)
         terminal = TerminalController(store: store)
         termux = TermuxController(store: store)
+        history = HistoryController(configURL: store.url)
         reload()
     }
 
@@ -104,6 +106,7 @@ final class AppModel {
         config = loaded.document.config
         fingerprint = loaded.fingerprint
         permissions = loaded.permissions
+        history.apply(loaded.document.config.clipboardHistory)
     }
 
     private func clear() {
@@ -111,5 +114,7 @@ final class AppModel {
         config = nil
         fingerprint = nil
         permissions = nil
+        // Without a valid configuration nothing may be recorded.
+        history.apply(nil)
     }
 }

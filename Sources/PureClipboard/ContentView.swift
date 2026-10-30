@@ -6,6 +6,16 @@ struct ContentView: View {
     @Environment(AppModel.self) private var model
     @State private var section: StudioSection = .clipboard
 
+    private var footer: String {
+        switch section {
+        case .clipboard: "Pure Clipboard · Kopírování řídíte vy"
+        case .history: model.config?.clipboardHistory.isCapturing == true
+            ? "Historie schránky je zapnutá · sleduje se jen při běžící aplikaci, vše zůstává na tomto Macu"
+            : "Historie schránky je vypnutá · schránka se nesleduje"
+        case .remote: "Pure Remote · Stav Tailscale se čte jen při zapnutém přepínači"
+        }
+    }
+
     var body: some View {
         ZStack {
             Theme.background.ignoresSafeArea()
@@ -27,13 +37,13 @@ struct ContentView: View {
                             TerminalCard()
                             TermuxCard()
                             ConfigStatusCard()
+                        } else if section == .history {
+                            HistorySection(config: config)
                         } else {
                             RemoteCard(enabled: config.integrations.pureRemote.enabled)
                         }
                     }
-                    Text(section == .clipboard
-                         ? "Pure Clipboard · Kopírování řídíte vy"
-                         : "Pure Remote · Stav Tailscale se čte jen při zapnutém přepínači")
+                    Text(footer)
                         .font(.system(size: 11))
                         .foregroundStyle(Theme.tertiaryText)
                         .padding(.top, 4)
@@ -51,10 +61,22 @@ struct ContentView: View {
 }
 
 private enum StudioSection: String, CaseIterable {
-    case clipboard, remote
+    case clipboard, history, remote
 
-    var title: String { self == .clipboard ? "Pure Clipboard" : "Pure Remote" }
-    var symbol: String { self == .clipboard ? "doc.on.clipboard" : "network" }
+    var title: String {
+        switch self {
+        case .clipboard: "Pure Clipboard"
+        case .history: "Historie"
+        case .remote: "Pure Remote"
+        }
+    }
+    var symbol: String {
+        switch self {
+        case .clipboard: "doc.on.clipboard"
+        case .history: "clock.arrow.circlepath"
+        case .remote: "network"
+        }
+    }
 }
 
 private struct StudioNavigation: View {
@@ -254,52 +276,22 @@ private struct IntegrationRow: View {
 }
 
 private struct HistoryCard: View {
-    @Environment(AppModel.self) private var model
     let config: PureClipboardConfig
 
     var body: some View {
-        Card(title: "Historie schránky · připravuje se", symbol: "clock.arrow.circlepath") {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text("\(config.global.historyLimit)")
-                        .font(.system(size: 30, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundStyle(Theme.primaryText)
-                    Text("položek")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Theme.secondaryText)
-                    Spacer()
-                    Stepper("Limit historie", value: Binding(
-                        get: { config.global.historyLimit },
-                        set: { value in model.update { $0.global.historyLimit = value } }
-                    ), in: PureClipboardConfig.historyLimitRange)
-                    .labelsHidden()
-                }
-                HStack(spacing: 6) {
-                    ForEach([10, 20, 50, 100], id: \.self) { preset in
-                        Button("\(preset)") { model.update { $0.global.historyLimit = preset } }
-                            .buttonStyle(PresetButtonStyle(selected: config.global.historyLimit == preset))
-                    }
-                }
-                Text("Nastavený limit pro budoucí historii (\(PureClipboardConfig.historyLimitRange.lowerBound)–\(PureClipboardConfig.historyLimitRange.upperBound)). Obsah schránky se zatím neukládá.")
-                    .font(.system(size: 11))
-                    .foregroundStyle(Theme.tertiaryText)
+        let history = config.clipboardHistory
+        Card(title: "Historie schránky", symbol: "clock.arrow.circlepath") {
+            VStack(alignment: .leading, spacing: 8) {
+                StatusPill(text: !history.enabled ? "Vypnuto" : history.paused ? "Pozastaveno" : "Zapnuto",
+                           color: !history.enabled ? Theme.secondaryText : history.paused ? Theme.warning : Theme.accent)
+                Text(history.enabled
+                     ? "Sleduje se systémová schránka, dokud je aplikace spuštěná. Nastavení je na záložce Historie."
+                     : "Schránka se nesleduje. Historii můžete zapnout na záložce Historie.")
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-    }
-}
-
-private struct PresetButtonStyle: ButtonStyle {
-    let selected: Bool
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 11.5, weight: .medium))
-            .foregroundStyle(selected ? Color.black.opacity(0.85) : Theme.secondaryText)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .background(selected ? Theme.accent : Color.white.opacity(configuration.isPressed ? 0.12 : 0.06), in: Capsule())
     }
 }
 

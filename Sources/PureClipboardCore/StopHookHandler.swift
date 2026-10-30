@@ -2,7 +2,7 @@ import AppKit
 import Foundation
 
 public enum PureClipboardVersion {
-    public static let string = "0.6.0"
+    public static let string = "0.7.0"
 }
 
 public protocol ClipboardWriting {

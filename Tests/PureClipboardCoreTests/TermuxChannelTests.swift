@@ -421,7 +421,7 @@ private struct ScriptLab {
     }
 
     @Test func helpAndDoctorWork() throws {
-        let lab = try ScriptLab(helperBehaviour: "#!/bin/sh\necho 0.6.0\n")
+        let lab = try ScriptLab(helperBehaviour: "#!/bin/sh\necho 0.7.0\n")
         defer { try? FileManager.default.removeItem(at: lab.dir) }
         #expect(try lab.run([]).out.contains("pcr tomac"))
         let doctor = try lab.run(["doctor"])

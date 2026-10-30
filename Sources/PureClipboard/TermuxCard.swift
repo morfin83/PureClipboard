@@ -16,7 +16,7 @@ struct TermuxCard: View {
         Card(title: "Termux – S25 ↔ Mac", symbol: "candybarphone") {
             VStack(alignment: .leading, spacing: 12) {
                 HStack { statusPill(state); Spacer() }
-                Text("Text se přenáší jen na váš příkaz. Telefon se připojí k Macu přes SSH (Tailscale) vaším stávajícím klíčem a spustí pomocný program Pure Clipboard. Nic na telefonu ani na Macu nenaslouchá a nic se nesleduje. Přijatý text se do schránky Macu dostane až tlačítkem Kopírovat. Nastavení SSH se nemění.")
+                Text("Text se přenáší jen na váš příkaz. Telefon se připojí k Macu přes SSH (Tailscale) vaším stávajícím klíčem a spustí pomocný program Pure Clipboard. Nic na telefonu ani na Macu nenaslouchá a přenos Termuxu nic nesleduje. Přijatý text se do schránky Macu dostane až tlačítkem Kopírovat. Nastavení SSH se nemění.")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)

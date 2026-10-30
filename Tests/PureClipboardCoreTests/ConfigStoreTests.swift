@@ -194,8 +194,14 @@ private func object(_ data: Data) throws -> [String: Any] {
         loaded.document.config.integrations[.termux].enabled.toggle()
         try store.save(loaded.document, expectedFingerprint: loaded.fingerprint)
 
-        let roundTripped = try JSONDecoder().decode(JSONValue.self, from: Data(contentsOf: store.url))
-        #expect(roundTripped == (try JSONDecoder().decode(JSONValue.self, from: original)))
+        // A config written before 0.7.0 gains exactly one key (history, switched off); everything else is untouched.
+        var after = try object(Data(contentsOf: store.url))
+        let before = try object(original)
+        if before["clipboardHistory"] == nil {
+            let added = try #require(after.removeValue(forKey: "clipboardHistory") as? [String: Any])
+            #expect(added["enabled"] as? Bool == false)
+        }
+        #expect(NSDictionary(dictionary: after).isEqual(to: before))
         #expect(try Data(contentsOf: real) == original)
     }
 
