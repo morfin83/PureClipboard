@@ -4,6 +4,12 @@ import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
+        if let directory = ScreenshotMode.outputDirectory() {
+            NSApp.setActivationPolicy(.accessory)
+            ScreenshotMode.run(into: directory)
+            NSApp.terminate(nil)
+            return
+        }
         NSApp.setActivationPolicy(.regular)
         NSApp.activate()
     }
@@ -16,7 +22,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 @main
 struct PureClipboardApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    @State private var model = AppModel(store: ConfigFileStore(url: ConfigFileStore.defaultURL()))
+    @State private var model = ScreenshotMode.outputDirectory() == nil
+        ? AppModel(store: ConfigFileStore(url: ConfigFileStore.defaultURL()))
+        : AppModel(store: ConfigFileStore(url: ScreenshotMode.unusedConfigURL), monitoring: false)
 
     var body: some Scene {
         Window("Pure Clipboard", id: "main") {

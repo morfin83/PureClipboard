@@ -4,7 +4,14 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(AppModel.self) private var model
-    @State private var section: StudioSection = .clipboard
+    @State private var section: StudioSection
+
+    private let scrolling: Bool
+
+    init(section: StudioSection = .clipboard, scrolling: Bool = true) {
+        _section = State(initialValue: section)
+        self.scrolling = scrolling
+    }
 
     private var footer: String {
         switch section {
@@ -16,41 +23,47 @@ struct ContentView: View {
         }
     }
 
+    private var page: some View {
+        VStack(spacing: 16) {
+            HeaderView()
+            StudioNavigation(section: $section)
+            if let config = model.config {
+                if section == .clipboard {
+                    PreviewNotice()
+                    AutoCopyCard(config: config)
+                    IntegrationsCard(config: config)
+                    HStack(alignment: .top, spacing: 16) {
+                        HistoryCard(config: config)
+                        SensitiveDataCard(config: config)
+                    }
+                    HookCard(target: .claude)
+                    HookCard(target: .codex)
+                    TerminalCard()
+                    TermuxCard()
+                    ConfigStatusCard()
+                } else if section == .history {
+                    HistorySection(config: config)
+                } else {
+                    RemoteCard(enabled: config.integrations.pureRemote.enabled)
+                }
+            }
+            Text(footer)
+                .font(.system(size: 11))
+                .foregroundStyle(Theme.tertiaryText)
+                .padding(.top, 4)
+        }
+        .padding(.horizontal, 28)
+        .padding(.top, 36)
+        .padding(.bottom, 24)
+    }
+
     var body: some View {
         ZStack {
             Theme.background.ignoresSafeArea()
-            ScrollView {
-                VStack(spacing: 16) {
-                    HeaderView()
-                    StudioNavigation(section: $section)
-                    if let config = model.config {
-                        if section == .clipboard {
-                            PreviewNotice()
-                            AutoCopyCard(config: config)
-                            IntegrationsCard(config: config)
-                            HStack(alignment: .top, spacing: 16) {
-                                HistoryCard(config: config)
-                                SensitiveDataCard(config: config)
-                            }
-                            HookCard(target: .claude)
-                            HookCard(target: .codex)
-                            TerminalCard()
-                            TermuxCard()
-                            ConfigStatusCard()
-                        } else if section == .history {
-                            HistorySection(config: config)
-                        } else {
-                            RemoteCard(enabled: config.integrations.pureRemote.enabled)
-                        }
-                    }
-                    Text(footer)
-                        .font(.system(size: 11))
-                        .foregroundStyle(Theme.tertiaryText)
-                        .padding(.top, 4)
-                }
-                .padding(.horizontal, 28)
-                .padding(.top, 36)
-                .padding(.bottom, 24)
+            if scrolling {
+                ScrollView { page }
+            } else {
+                page
             }
         }
         .tint(Theme.accent)
@@ -60,7 +73,7 @@ struct ContentView: View {
     }
 }
 
-private enum StudioSection: String, CaseIterable {
+enum StudioSection: String, CaseIterable {
     case clipboard, history, remote
 
     var title: String {

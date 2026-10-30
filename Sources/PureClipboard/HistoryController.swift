@@ -22,14 +22,16 @@ final class HistoryController {
     private let claims: ClipboardClaimStore
     @ObservationIgnored private var monitor: ClipboardHistoryMonitor?
 
-    init(configURL: URL) {
+    init(configURL: URL, monitoring: Bool = true) {
         let directory = HistoryStore.defaultDirectory(configURL: configURL)
         store = HistoryStore(directory: directory)
         claims = ClipboardClaimStore(directory: configURL.deletingLastPathComponent())
-        let capture = HistoryCapture(store: store, screener: VisionContentScreener())
-        monitor = ClipboardHistoryMonitor(capture: capture, settings: box, onChange: { [weak self] status in
-            Task { @MainActor in self?.monitorChanged(status) }
-        })
+        if monitoring {
+            let capture = HistoryCapture(store: store, screener: VisionContentScreener())
+            monitor = ClipboardHistoryMonitor(capture: capture, settings: box, onChange: { [weak self] status in
+                Task { @MainActor in self?.monitorChanged(status) }
+            })
+        }
         refresh()
     }
 
@@ -64,9 +66,8 @@ final class HistoryController {
     }
 
     func restore(_ item: HistoryItem) {
-        guard let monitor else { return }
         let outcome = PasteboardRestorer.restore(item, from: store, to: .general, claims: claims)
-        monitor.ignore(changeCount: outcome.changeCount)
+        monitor?.ignore(changeCount: outcome.changeCount)
         switch outcome.result {
         case .restored: notice = Notice(text: "Položka je ve schránce.", isError: false)
         case .partial(let missing): notice = Notice(text: "Do schránky se dostalo vše kromě \(missing) chybějících originálů.", isError: true)

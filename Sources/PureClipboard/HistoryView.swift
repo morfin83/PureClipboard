@@ -197,7 +197,7 @@ private struct HistoryListCard: View {
                         }
                     }
                 }
-                Text("Celkem \(ByteCountFormatter.string(fromByteCount: Int64(history.totalBytes), countStyle: .file)). Smazání odstraní soubory historie; na SSD nelze zaručit nevratné přepsání dat.")
+                Text("Celkem \(Self.size(history.totalBytes)). Smazání odstraní soubory historie; na SSD nelze zaručit nevratné přepsání dat.")
                     .font(.system(size: 11)).foregroundStyle(Theme.tertiaryText)
             }
         }
@@ -207,6 +207,13 @@ private struct HistoryListCard: View {
         } message: {
             Text("Odstraní se všechny uložené položky. Odkazovaným souborům se nic nestane.")
         }
+    }
+
+    private static func size(_ bytes: Int) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        formatter.allowsNonnumericFormatting = false
+        return formatter.string(fromByteCount: Int64(bytes))
     }
 
     private func emptyState(_ text: String) -> some View {

@@ -30,13 +30,13 @@ final class AppModel {
     private var document: ConfigDocument?
     private var fingerprint: String?
 
-    init(store: ConfigFileStore) {
+    init(store: ConfigFileStore, monitoring: Bool = true) {
         self.store = store
         claude = HookController(target: .claude, store: store)
         codex = HookController(target: .codex, store: store)
         terminal = TerminalController(store: store)
         termux = TermuxController(store: store)
-        history = HistoryController(configURL: store.url)
+        history = HistoryController(configURL: store.url, monitoring: monitoring)
         reload()
     }
 
