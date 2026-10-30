@@ -132,7 +132,7 @@ Omezení a neověřeno:
 - Rozhodnuto: přenos přes **ADB po dílech** (bez nového serveru na telefonu), kabel USB má přednost, Wi‑Fi je záloha, mobilní data jen po potvrzení. Podrobnosti, měření a omezení: [docs/PRENOS-SOUBORU.md](docs/PRENOS-SOUBORU.md).
 - Naměřeno: LTE 1,4 MB/s, Wi‑Fi 6,8 MB/s (dělení na díly ≈ −4 %); USB neměřeno.
 - Implementace: `Sources/PureClipboardCore/Transfer/` (model, úložiště, vrstva `adb`, engine), karta `TransferCard` v záložce Pure Remote, příkaz `transfer-enqueue` v pomocném programu. Testy: 38 nových (falešný telefon: pauza, restart, ztracená odpověď, výpadek, špatný součet, nepřepsání souboru, mobilní data, zrušení, změněný zdroj, málo místa).
-- **Ověřeno na reálném S25 (Wi‑Fi):** pauza po 12,6 MB, pokračování od téhož místa bez nového začátku, průměr 7,3 MB/s, SHA‑256 sedí. **Neověřeno:** kabel USB, úprava Rychlé akce (čeká na potvrzení).
+- **Ověřeno na reálném S25 (Wi‑Fi):** pauza po 12,6 MB, pokračování od téhož místa bez nového začátku, průměr 7,3 MB/s, SHA‑256 sedí. **Neověřeno:** kabel USB (odloženo). Rychlá akce je přepojena na aplikaci a ověřena malým souborem.
 
 ## Závazné požadavky na veřejnou distribuci
 

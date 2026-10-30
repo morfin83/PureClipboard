@@ -39,9 +39,11 @@ PURECLIPBOARD_REAL_PHONE=100.92.44.15:5555 swift test --filter RealPhone
 ```
 Test pošle jeden 40MB dočasný soubor, uprostřed ho pozastaví, naváže, ověří SHA‑256 na telefonu a smaže ho.
 
-## Návrh úpravy Rychlé akce „odeslat do S25“ (zatím NEPROVEDENO)
-Vaše akce dnes volá `adb push` sama a Pure Clipboard o ní neví. Aby se přenosy zobrazovaly v aplikaci a uměly pokračovat, stačí v kroku „Spustit shell skript“ (vstup: jako argumenty) nahradit obsah tímto. Původní skript se tím přestane používat; **změnu provedu až po Vašem potvrzení** a se zálohou původní akce.
-```sh
-HELPER="$HOME/Library/Application Support/PureClipboard/bin/pureclipboard-hook"
-"$HELPER" transfer-enqueue "$@" && open -a "Pure Clipboard"
-```
+## Rychlá akce „odeslat do S25“ (Finder)
+Od 30. 10. 2026 akce **předává soubory aplikaci**, nepřenáší je sama. Akce je v `~/Library/Services/odeslat do S25.workflow`; původní verze je zálohovaná v `~/Library/Application Support/PureClipboard/backups/quick-action-*`.
+
+Akce zavolá `pureclipboard-hook transfer-enqueue SOUBOR…`, aplikaci otevře a zobrazí oznámení s výsledkem. Pokud aplikace neběží, požadavek počká ve frontě a zpracuje se po spuštění aplikace. Složky a nečitelné soubory se přeskočí.
+
+Ověřeno 30. 10. 2026: 32B testovací soubor odeslaný akcí se objevil na S25 jako `pcr-quickaction-test.txt` (stav `completed`, Wi‑Fi). Testovací soubor byl z telefonu smazán.
+
+Adresa telefonu se ukládá v `transfers/settings.json` (pole „Adresa telefonu“ v kartě).
