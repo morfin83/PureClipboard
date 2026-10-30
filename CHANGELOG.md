@@ -1,5 +1,12 @@
 # Změny
 
+## 0.8.0
+- **Přenos souborů Mac → telefon** v Pure Remote: soubory jdou do složky Stažené v telefonu po dílech přes `adb` (kabel USB, jinak Wi‑Fi). Lze je pozastavit a pokračovat bez nového začátku; u každého souboru je vidět průběh a rychlost.
+- Hotový soubor se ověří SHA‑256 na telefonu a teprve potom se přesune do cíle; existující soubor se nepřepíše.
+- Mobilní data se nepoužijí bez potvrzení.
+- Rychlá akce „odeslat do S25“ předává soubory aplikaci (původní verze zálohovaná).
+- Pomocný program: příkaz `transfer-enqueue`.
+
 ## 0.7.0 (2026-10-30)
 - **Historie systémové schránky** (ve výchozím stavu vypnutá; sleduje jen po zapnutí a při běžící aplikaci): text, formátovaný text (RTF), obrázky, PDF, soubory a složky z Finderu (jen odkazy na originály).
 - Hledání, obnovení do schránky, smazání položky i celé historie, pozastavení, limity (100 položek, 30 dní, 10 MB položka, 200 MB celkem; vše nastavitelné).

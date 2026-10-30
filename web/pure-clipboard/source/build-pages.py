@@ -11,7 +11,7 @@ def page(c):
     hero = img["assets/app-preview.png"]
     ld = {"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Pure Clipboard",
           "applicationCategory": "UtilitiesApplication", "operatingSystem": "macOS 14+ (Apple Silicon)",
-          "description": c["seo"]["description"], "softwareVersion": "0.7.0", "inLanguage": c["lang"],
+          "description": c["seo"]["description"], "softwareVersion": "0.8.0", "inLanguage": c["lang"],
           "publisher": {"@type": "Organization", "name": "PURE"}}
     other = "en" if c["lang"] == "cs" else "cs"
     faq_ld = {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [

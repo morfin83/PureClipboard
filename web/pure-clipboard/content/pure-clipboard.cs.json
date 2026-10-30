@@ -14,7 +14,7 @@
     "eyebrow": "PURE / LAB",
     "title": "Pure Clipboard.",
     "tagline": "Historie schránky na vašem Macu. Vypnutá, dokud ji nezapnete.",
-    "status": "Vývoj · v0.7.0",
+    "status": "Vývoj · v0.8.0",
     "downloadLabel": "Stažení připravujeme",
     "downloadNote": "Podepsané a notarizované vydání pro Apple Silicon zatím není hotové. Tlačítko ke stažení se objeví, až bude."
   },
@@ -102,7 +102,7 @@
   "changelogTitle": "Změny",
   "changelog": [
     {
-      "version": "0.7.0",
+      "version": "0.8.0",
       "date": "2026-10-30",
       "items": [
         "Historie systémové schránky (vypnutá ve výchozím stavu): text, formátovaný text, obrázky, PDF, soubory a složky jako odkazy.",

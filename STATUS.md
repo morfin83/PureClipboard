@@ -1,14 +1,14 @@
 # Pure Clipboard – stav projektu
 
-Snímek ze **30. 10. 2026**, verze **0.7.0** (Milník 6: přenos souborů, viz [docs/PRENOS-SOUBORU.md](docs/PRENOS-SOUBORU.md)). Podrobnosti: [PLAN.md](PLAN.md), [README.md](README.md), [docs/HISTORIE.md](docs/HISTORIE.md), [docs/DISTRIBUCE.md](docs/DISTRIBUCE.md).
+Snímek ze **30. 10. 2026**, verze **0.8.0** (Milník 6: přenos souborů, viz [docs/PRENOS-SOUBORU.md](docs/PRENOS-SOUBORU.md)). Podrobnosti: [PLAN.md](PLAN.md), [README.md](README.md), [docs/HISTORIE.md](docs/HISTORIE.md), [docs/DISTRIBUCE.md](docs/DISTRIBUCE.md).
 
 ## Hotovo a ověřeno (na tomto MacBooku Pro, Apple Silicon, macOS 27.2)
 - `swift test`: **247/247** (Milník 6 přidal 38 testů přenosu souborů s falešným telefonem; reálný test na S25 je volitelný přes `PURECLIPBOARD_REAL_PHONE`).
-- `scripts/build-app.sh`: OK, v0.7.0 (CFBundleVersion 7), helper hlásí 0.7.0, `codesign --verify --strict --deep` OK (ad-hoc).
+- `scripts/build-app.sh`: OK, v0.8.0 (CFBundleVersion 8), helper hlásí 0.8.0, `codesign --verify --strict --deep` OK (ad-hoc).
 - `scripts/integration-test.sh`: **100/100** (reálná schránka, izolovaná konfigurace; `authorized_keys` beze změny).
 - Historické verze (testy na zdrojových commitech): v0.1.0 12/12, v0.2.0 47/47, v0.3.0 110/110, v0.4.0 111/111, v0.5.0 134/134.
 - Historie schránky (vypnutá ve výchozím stavu), ruční vykreslení obrazovek aplikace (`--render-screenshots`) zkontrolováno vizuálně.
-- Testovací DMG: `dist/PureClipboard-0.7.0-arm64-adhoc-TEST.dmg` (ad-hoc, **není notarizované, nepublikovat**); namontováno, obsah (app, Applications, návod, pozadí, rozložení) a `codesign` ověřeny, SHA-256 viz `dist/*.sha256`.
+- Testovací DMG: `dist/PureClipboard-0.8.0-arm64-adhoc-TEST.dmg` (ad-hoc, **není notarizované, nepublikovat**); namontováno, obsah (app, Applications, návod, pozadí, rozložení) a `codesign` ověřeny, SHA-256 viz `dist/*.sha256`.
 
 ## Zbývá
 - **Přenos souborů Mac → telefon (Milník 6) ověřen na skutečném S25 přes Wi‑Fi** (40 MB, pauza po 12,6 MB, pokračování od téhož místa, 7,3 MB/s, SHA-256 sedí). Neověřeno: kabel USB (odloženo). Rychlá akce „odeslat do S25“ předává soubory aplikaci (ověřeno malým souborem). Aplikace v `/Applications` obsahuje tuto funkci (přeinstalováno 30. 10. 2026).

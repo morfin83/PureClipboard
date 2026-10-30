@@ -1,6 +1,6 @@
 # Přenos souborů do telefonu (Pure Remote)
 
-Verze: 0.7.0+ (větev `milestone-6-file-transfer`). Směr: **Mac → telefon**. Cíl na telefonu: **Stažené** (`/sdcard/Download`).
+Verze: 0.8.0 (větev `milestone-6-file-transfer`). Směr: **Mac → telefon**. Cíl na telefonu: **Stažené** (`/sdcard/Download`).
 
 ## Co to umí
 - Seznam přenosů v záložce **Pure Remote**: soubor, zdroj → cíl, velikost, průběh, **rychlost u každého souboru**, odhad zbývajícího času, cesta (**Kabel USB**, **Wi‑Fi**, **Mobilní data**).

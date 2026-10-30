@@ -14,7 +14,7 @@
     "eyebrow": "PURE / LAB",
     "title": "Pure Clipboard.",
     "tagline": "Clipboard history on your Mac. Off until you turn it on.",
-    "status": "In development · v0.7.0",
+    "status": "In development · v0.8.0",
     "downloadLabel": "Download coming soon",
     "downloadNote": "The signed and notarized release for Apple silicon is not ready yet. The download button will appear when it is."
   },
@@ -102,7 +102,7 @@
   "changelogTitle": "Changelog",
   "changelog": [
     {
-      "version": "0.7.0",
+      "version": "0.8.0",
       "date": "2026-10-30",
       "items": [
         "System clipboard history (off by default): text, rich text, images, PDFs, files and folders as links.",

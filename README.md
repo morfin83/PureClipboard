@@ -1,7 +1,7 @@
 # Pure Clipboard
 
 Nativní macOS aplikace PureStudio se dvěma obrazovkami: **Pure Clipboard** pro kopírování textu na váš pokyn a **Pure Remote** pro živý přehled komunikace Tailscale.
-Aktuální stav: v0.7.0 (Milník 6): historie systémové schránky, Termux, Pure Remote, přenos souborů Mac → telefon. Podporováno: Apple Silicon, macOS 14+ (ověřeno jen na macOS 27). Intel, Windows ani Android podporované nejsou. Aplikace pro Windows 11 a Android přijdou až po ověření Mac verze. Viz [PLAN.md](PLAN.md).
+Aktuální stav: v0.8.0 (Milník 6): historie systémové schránky, Termux, Pure Remote, přenos souborů Mac → telefon. Podporováno: Apple Silicon, macOS 14+ (ověřeno jen na macOS 27). Intel, Windows ani Android podporované nejsou. Aplikace pro Windows 11 a Android přijdou až po ověření Mac verze. Viz [PLAN.md](PLAN.md).
 
 ```bash
 scripts/build-app.sh                         # sestaví build/PureClipboard.app
