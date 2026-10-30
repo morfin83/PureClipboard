@@ -26,6 +26,7 @@ echo "1. xcrun notarytool submit \"$DMG\" --keychain-profile \"\${NOTARY_PROFILE
 echo "2. xcrun stapler staple \"$DMG\""
 echo "3. xcrun stapler validate \"$DMG\""
 echo "4. spctl -a -t open --context context:primary-signature -vv \"$DMG\""
+echo "5. shasum -a 256 \"$DMG\" > \"$DMG.sha256\"   (po staplování se SHA-256 počítá znovu)"
 if (( ! SUBMIT )); then
   echo; echo "Plán – nic nebylo odesláno. Pro odeslání: NOTARY_PROFILE=<profil> scripts/notarize.sh \"$DMG\" --submit"
   exit 0
@@ -36,4 +37,6 @@ xcrun notarytool submit "$DMG" --keychain-profile "$NOTARY_PROFILE" --wait
 xcrun stapler staple "$DMG"
 xcrun stapler validate "$DMG"
 spctl -a -t open --context context:primary-signature -vv "$DMG"
-echo "Po notarizaci přepočítejte a zveřejněte nový SHA-256 (shasum -a 256)."
+# Stapling changed the bytes of the DMG, so the checksum is recomputed and the old one is replaced.
+( cd "${DMG:h}" && shasum -a 256 "${DMG:t}" > "${DMG:t}.sha256" )
+echo "Nový SHA-256 po staplování: $(cut -d' ' -f1 "$DMG.sha256")  (zveřejněte tento, ne předchozí)"

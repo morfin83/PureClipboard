@@ -1,7 +1,7 @@
 # Pure Clipboard
 
 Nativní macOS aplikace PureStudio se dvěma obrazovkami: **Pure Clipboard** pro kopírování textu na váš pokyn a **Pure Remote** pro živý přehled komunikace Tailscale.
-Aktuální stav: Milník 4 (Termux S25 ↔ Mac) nad přípravou distribuce (Milník 3, DMG zatím nevytvořeno) a funkcemi Milníku 2E (macOS). Aplikace pro Windows 11 a Android přijdou až po ověření Mac verze. Viz [PLAN.md](PLAN.md).
+Aktuální stav: v0.7.0 (Milník 5): historie systémové schránky, Termux, Pure Remote. Podporováno: Apple Silicon, macOS 14+ (ověřeno jen na macOS 27). Intel, Windows ani Android podporované nejsou. Aplikace pro Windows 11 a Android přijdou až po ověření Mac verze. Viz [PLAN.md](PLAN.md).
 
 ```bash
 scripts/build-app.sh                         # sestaví build/PureClipboard.app
@@ -12,13 +12,13 @@ Pro testování s kopií konfigurace lze cestu přepsat proměnnou `PURECLIPBOAR
 
 ## Ruční přenos mezi AI aplikacemi
 
-Pure Clipboard používá společnou schránku macOS. Kopírování proběhne až na váš pokyn:
+Pure Clipboard používá společnou schránku macOS. Bez zapnuté historie (výchozí) kopírování proběhne až na váš pokyn:
 
 1. **Část odpovědi:** označte text v ChatGPT, Claude, Gemini, Terminálu nebo jiné aplikaci a stiskněte `⌘C`.
 2. **Celá odpověď:** použijte tlačítko **Kopírovat** u odpovědi v dané aplikaci. V Claude Code v terminálu můžete použít `/copy`.
 3. Přejděte do cílové aplikace (`⌘Tab`) a vložte pomocí `⌘V`.
 
-Na Macu je klávesou pro kopírování `⌘`, nikoli `Ctrl`. V terminálu `Ctrl+C` přerušuje příkaz. Ruční kopírování přímo v jiné aplikaci zpracovává macOS; Pure Clipboard jeho obsah nečte ani nesleduje. Jestliže chcete, aby nové odpovědi Claude Code nebo Codexu samy nahradily schránku, zapněte **Auto Copy** a příslušnou integraci. Pro režim kopírování pouze na váš pokyn nechte **Auto Copy** vypnuté.
+Na Macu je klávesou pro kopírování `⌘`, nikoli `Ctrl`. V terminálu `Ctrl+C` přerušuje příkaz. Ruční kopírování přímo v jiné aplikaci zpracovává macOS; Pure Clipboard jeho obsah nečte, dokud sami nezapnete historii schránky (viz níže). Jestliže chcete, aby nové odpovědi Claude Code nebo Codexu samy nahradily schránku, zapněte **Auto Copy** a příslušnou integraci. Pro režim kopírování pouze na váš pokyn nechte **Auto Copy** vypnuté.
 
 ## Pure Remote na Macu
 
@@ -26,7 +26,9 @@ Přejděte v horní části aplikace na obrazovku **Pure Remote** a zapněte jej
 
 Mac nemůže ze svého místního stavu změřit živý přenos mezi dvěma jinými zařízeními. Ten přijde až s aplikacemi na dalších platformách. Ovládání připojení a vzdálené probouzení zatím nejsou součástí této obrazovky.
 
-Nastavení „Historie schránky“ je zatím jen příprava; obsah schránky se neukládá.
+## Historie schránky (v0.7.0)
+
+Záložka **Historie**. **Ve výchozím stavu vypnuto**; po výslovném zapnutí se systémová schránka sleduje jen při běžící aplikaci a ukládá se lokálně text, formátovaný text, obrázky a PDF (zvláštní souhlas), soubory a složky jako odkazy. Výchozí limity 100 položek / 30 dní, hledání, obnovení, mazání, pozastavení. Podrobnosti a meze ochrany citlivých údajů (OCR není záruka): [docs/HISTORIE.md](docs/HISTORIE.md).
 
 ## Zapnutí integrace Claude Code
 
@@ -79,7 +81,7 @@ Návod pro uživatele: [docs/INSTALACE.md](docs/INSTALACE.md). Postup pro vydava
 
 ```bash
 scripts/build-app.sh                 # build/PureClipboard.app (ad-hoc podpis, Apple Silicon)
-scripts/make-dmg.sh                  # jen plán; vytvoření až s --create
+scripts/make-dmg.sh                  # jen plán; vytvoření až s --create (ad-hoc = označený testovací DMG)
 scripts/notarize.sh <dmg>            # jen plán; odeslání až s --submit (vyžaduje Developer ID)
 ```
 
@@ -93,4 +95,4 @@ Termux na S25 slouží jen ke komunikaci s Macem. Přenos běží **jen na výsl
 
 Přijatý text se nikdy sám nezapíše do schránky Macu; položky v poště se po hodině smažou. Citlivé údaje se v obou směrech nepřenášejí. Terminálově: `pureclipboard-hook install-termux --apply`, `status-termux`, `uninstall-termux --apply`; `termux-send` zařadí text ze stdin k odeslání.
 
-Na skutečném telefonu zatím nezkoušeno (ověřeno simulací spojení); první kontrola: `pcr doctor`.
+Skutečný test na S25: viz STATUS.md (výsledek je tam uveden přesně). První kontrola: `pcr doctor`.

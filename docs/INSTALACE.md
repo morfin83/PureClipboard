@@ -4,13 +4,13 @@ Návod je psaný pro úplné začátečníky. Zabere asi 5 minut.
 
 ## Co potřebujete
 
-- Mac s čipem Apple (M1 nebo novější).
+- Mac s čipem Apple (Apple Silicon, M1 nebo novější).
 - macOS 14 nebo novější. Aplikace byla zatím vyzkoušena jen na macOS 27, starší verze nejsou ověřené.
 - **Macy s procesorem Intel zatím nejsou podporované.**
 
 ## 1. Stáhněte a ověřte soubor
 
-Stáhněte soubor `PureClipboard-<verze>-arm64.dmg` z oficiální stránky PureStudio. Vedle odkazu ke stažení je uvedený kontrolní součet **SHA-256**. Ověřením se ujistíte, že se soubor cestou nepoškodil a nikdo ho nepozměnil.
+Stáhněte soubor `PureClipboard-<verze>-arm64.dmg` z oficiální stránky PureStudio (až bude vydání dostupné; dnes existuje jen testovací ad-hoc sestavení, které se nestahuje). Vedle odkazu ke stažení je uvedený kontrolní součet **SHA-256**. Ověřením se ujistíte, že se soubor cestou nepoškodil a nikdo ho nepozměnil.
 
 1. Otevřete **Terminál** (Spotlight: `⌘ + mezerník`, napište „Terminál“).
 2. Vložte tento příkaz (cestu upravte, pokud je soubor jinde než ve Stažených):
@@ -47,14 +47,14 @@ Po získání placeného účtu Apple Developer se plánuje podepsání certifik
 
 Při prvním spuštění se aplikace nic nesnaží měnit. Nejdřív si ji prohlédněte:
 
-- **Ruční kopírování funguje vždy:** označte text v libovolné aplikaci (ChatGPT, Claude, Gemini, Terminál…), stiskněte `⌘C`, přepněte se (`⌘Tab`) a vložte `⌘V`. Pure Clipboard při tom nic nečte ani nesleduje.
+- **Ruční kopírování funguje vždy:** označte text v libovolné aplikaci (ChatGPT, Claude, Gemini, Terminál…), stiskněte `⌘C`, přepněte se (`⌘Tab`) a vložte `⌘V`. Pure Clipboard při tom nic nečte, dokud sami nezapnete historii schránky.
 - **Auto Copy** zapíná volitelné samočinné kopírování finálních odpovědí z **Claude Code** a **Codexu**. Je vypnuté, pokud ho nezapnete.
 - Každá integrace má v aplikaci vlastní kartu. **Žádná se neinstaluje sama.** U každé nejdřív uvidíte přesný plán změn a potvrdíte ho; před zásahem do cizího souboru se vytvoří záloha.
   - **Claude Code** – hook v `~/.claude/settings.json`.
   - **Codex** – hook v `~/.codex/hooks.json`. Po instalaci spusťte Codex, napište `/hooks` a nový hook **schvalte**; do té doby ho Codex přeskakuje. Codex Desktop zatím není ověřený.
   - **Apple Terminal** – příkaz `pclip` (do `~/.zshrc` se připíše jediný označený blok). Použití: `pclip swift build`; spustí příkaz a jeho výstup zkopíruje.
-- **Pure Remote** (vyžaduje nainstalovaný Tailscale) ukazuje živý přehled spojení Tailscale na tomto Macu (čte jen místní stav, nic nemění). Historie schránky zatím není hotová.
-- **Termux** (volitelné) umí posílat text mezi telefonem S25 a Macem, ale jen na váš příkaz `pcr` v Termuxu. Přijatý text se do schránky Macu dostane až tlačítkem **Kopírovat**. Postup a požadavky jsou v kartě „Termux – S25 ↔ Mac“ a v README; kanál se připravuje po zobrazení plánu a nic nemění v nastavení SSH. Na skutečném telefonu zatím nebyl vyzkoušen.
+- **Pure Remote** (vyžaduje nainstalovaný Tailscale) ukazuje živý přehled spojení Tailscale na tomto Macu (čte jen místní stav, nic nemění). **Historie schránky** (záložka Historie) je ve výchozím stavu **vypnutá**; zapnete ji sami, viz [HISTORIE.md](HISTORIE.md).
+- **Termux** (volitelné) umí posílat text mezi telefonem S25 a Macem, ale jen na váš příkaz `pcr` v Termuxu. Přijatý text se do schránky Macu dostane až tlačítkem **Kopírovat**. Postup a požadavky jsou v kartě „Termux – S25 ↔ Mac“ a v README; kanál se připravuje po zobrazení plánu a nic nemění v nastavení SSH. Výsledek reálného testu na S25 je v STATUS.md.
 - **Ochrana citlivých údajů** (zapnutá): automatické kopírování přeskočí texty, které vypadají jako heslo, token nebo soukromý klíč.
 
 ## 5. Aktualizace
@@ -79,4 +79,4 @@ Automatické aktualizace zatím nejsou. Stáhněte novou verzi, ověřte SHA-256
 
 ## Soukromí
 
-Pure Clipboard **nepoužívá internet**, neposílá nikam data ani statistiky, nečte obsah schránky ostatních aplikací a nemá žádné účty. Ukládá jen vaše nastavení a metadata poslední události (čas, výsledek, počet znaků), nikdy obsah zkopírovaného textu. Výjimky jsou dvě: `pclip` (výstup příkazu se na okamžik zapíše do dočasného souboru čitelného jen vámi a po dokončení příkazu se smaže) a Termux (text čekající v přijaté nebo odesílané poště, v soukromé složce, nejdéle hodinu; odebráním kanálu se smaže hned).
+Pure Clipboard **nepoužívá internet**, neposílá nikam data ani statistiky a nemá žádné účty. Obsah schránky ostatních aplikací **čte jen při zapnuté historii** (výchozí je vypnuto) a jen dokud je aplikace spuštěná; ukládá ho lokálně (viz [HISTORIE.md](HISTORIE.md)). Jinak ukládá jen nastavení a metadata poslední události (čas, výsledek, počet znaků). Výjimky: `pclip` (výstup příkazu se na okamžik zapíše do dočasného souboru čitelného jen vámi a po dokončení příkazu se smaže) a Termux (text čekající v přijaté nebo odesílané poště, v soukromé složce, nejdéle hodinu; odebráním kanálu se smaže hned).

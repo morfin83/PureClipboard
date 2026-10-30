@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pure Clipboard — PURE</title>
+<meta name="description" content="Pure Clipboard je nativní aplikace pro macOS: volitelná, ve výchozím stavu vypnutá historie schránky, která zůstává jen na vašem Macu.">
+<meta name="theme-color" content="#fafaf8">
+<link rel="canonical" href="https://www.studiopuresound.cz/cs/lab/pure-clipboard/">
+<link rel="alternate" hreflang="cs" href="https://www.studiopuresound.cz/cs/lab/pure-clipboard/">
+<link rel="alternate" hreflang="en" href="https://www.studiopuresound.cz/en/lab/pure-clipboard/">
+<link rel="icon" type="image/png" href="../assets/favicon-64.png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Pure Clipboard — PURE">
+<meta property="og:description" content="Historie schránky pro macOS. Vypnutá, dokud ji nezapnete. Nic neodchází do cloudu.">
+<meta property="og:url" content="https://www.studiopuresound.cz/cs/lab/pure-clipboard/">
+<meta property="og:locale" content="cs_CZ">
+<meta property="og:image" content="https://www.studiopuresound.cz/assets/pure-clipboard-og.png">
+<meta property="og:image:alt" content="Okno aplikace Pure Clipboard s historií schránky (ukázková data)">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../assets/pure-clipboard.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Pure Clipboard", "applicationCategory": "UtilitiesApplication", "operatingSystem": "macOS 14+ (Apple Silicon)", "description": "Pure Clipboard je nativní aplikace pro macOS: volitelná, ve výchozím stavu vypnutá historie schránky, která zůstává jen na vašem Macu.", "softwareVersion": "0.7.0", "inLanguage": "cs", "publisher": {"@type": "Organization", "name": "PURE"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Sleduje Pure Clipboard moji schránku?", "acceptedAnswer": {"@type": "Answer", "text": "Jen když zapnete historii, a jen dokud je aplikace spuštěná. Ve výchozím stavu je historie vypnutá a schránka se nesleduje."}}, {"@type": "Question", "name": "Kam se ukládají data?", "acceptedAnswer": {"@type": "Answer", "text": "Do složky ~/Library/Application Support/PureClipboard na vašem Macu. Nic se neposílá na internet."}}, {"@type": "Question", "name": "Ukládají se hesla ze správce hesel?", "acceptedAnswer": {"@type": "Answer", "text": "Ne. Obsah označený jako soukromý nebo dočasný se přeskočí. Text se navíc prověřuje na hesla a tokeny; spolehlivé rozpoznání ale nelze zaručit."}}, {"@type": "Question", "name": "Ukládají se kopie mých souborů?", "acceptedAnswer": {"@type": "Answer", "text": "Ne. Z Finderu se ukládá jen odkaz na originál. Když originál zmizí, aplikace to ukáže."}}, {"@type": "Question", "name": "Jsou obrázky a PDF v bezpečí?", "acceptedAnswer": {"@type": "Answer", "text": "Ukládají se jen po zvláštním souhlasu a po kontrole OCR v Macu. OCR nerozpozná rukopis, QR kódy ani tajné údaje, které nejsou text, takže tuto funkci povolte jen vědomě."}}, {"@type": "Question", "name": "Funguje to na Intel Macu, Windows nebo Androidu?", "acceptedAnswer": {"@type": "Answer", "text": "Ne. Podporovaný je Apple Silicon s macOS 14 nebo novějším. Jiné platformy zatím nejsou ověřené."}}, {"@type": "Question", "name": "Je aplikace notarizovaná?", "acceptedAnswer": {"@type": "Answer", "text": "Zatím ne. Podepsané a notarizované vydání čeká na placený účet Apple Developer. Do té doby se nestahuje z webu."}}]}</script>
+</head>
+<body>
+<a class="skip" href="#main">Přeskočit na obsah</a>
+<div class="wrap">
+<header class="top"><a href="../">← Lab</a><a href="https://www.studiopuresound.cz/en/lab/pure-clipboard/" hreflang="en">EN</a></header>
+<main id="main">
+<div class="hero">
+<div>
+<p class="eyebrow">PURE / LAB</p>
+<h1>Pure Clipboard.</h1>
+<p class="tagline">Historie schránky na vašem Macu. Vypnutá, dokud ji nezapnete.</p>
+<!-- No working download link until the Developer ID signed and notarized DMG exists (see HANDOFF-CODEX.md). -->
+<span class="cta" role="note" aria-disabled="true">Stažení připravujeme</span><span class="status">Vývoj · v0.7.0</span>
+<p class="note">Podepsané a notarizované vydání pro Apple Silicon zatím není hotové. Tlačítko ke stažení se objeví, až bude.</p>
+</div>
+<figure class="preview"><img src="../assets/app-preview.png" alt="Okno aplikace Pure Clipboard: záložka Historie s uloženými položkami (ukázková data)" width="1520" height="1900"><figcaption style="padding:10px 16px;color:#a3a49d">Skutečné okno aplikace s ukázkovými daty. Nečte vaši schránku ani účet.</figcaption></figure>
+</div>
+<section><p class="intro">Pure Clipboard si pamatuje, co jste kopírovali, a vrátí vám to jedním kliknutím. Je to nativní aplikace pro macOS, bez účtu, bez cloudu a bez analytiky.</p></section>
+<section><h2>Co umí</h2><div class="grid"><div><h3>Historie schránky</h3><p>Text, formátovaný text, obrázky, PDF a soubory či složky z Finderu, včetně vícenásobného výběru. U souborů se ukládá jen odkaz na originál, ne kopie.</p></div><div><h3>Hledání a obnovení</h3><p>Najděte položku podle slova, aplikace nebo názvu souboru a jedním kliknutím ji vraťte do schránky. Chybějící originál aplikace srozumitelně označí.</p></div><div><h3>Pod vaší kontrolou</h3><p>Výchozí limity: 100 položek a 30 dní. Můžete nastavit velikost položky i celého úložiště, historii pozastavit, smazat jednu položku nebo vše.</p></div><div><h3>Přeskakuje citlivé</h3><p>Obsah označený správcem hesel jako soukromý či dočasný se neukládá. Text se před uložením prověří na hesla, klíče a tokeny.</p></div><div><h3>AI a terminál na váš pokyn</h3><p>Volitelně zkopíruje finální odpověď Claude Code a Codex CLI nebo výstup příkazu přes pclip. Termux na telefonu přenáší text jen na váš příkaz.</p></div><div><h3>Pure Remote</h3><p>Přehled spojení Tailscale mezi tímto Macem a vašimi zařízeními. Čte jen místní stav a nic neukládá.</p></div></div></section>
+<section><h2>Soukromí</h2><ul class="plain"><li>Historie je ve výchozím stavu vypnutá. Schránka se sleduje až po vašem výslovném zapnutí a jen dokud je aplikace spuštěná.</li><li>Všechno zůstává na tomto Macu v souborech čitelných jen vámi. Obsah ani diagnostika se neposílají do cloudu a aplikace nemá žádný síťový kód.</li><li>Obrázky a PDF se ukládají jen po zvláštním souhlasu. Před uložením je aplikace prohlédne rozpoznáváním textu (OCR) přímo v Macu. OCR nenajde všechno, proto neslibujeme, že obrazem neprojde žádný tajný údaj.</li><li>Ochrana citlivých údajů je pomocník, ne záruka. Při pochybnostech se položka raději nestaví.</li></ul></section>
+<section><div class="shots"><figure><img src="../assets/history-on.png" alt="Záložka Historie se zapnutou historií: přepínač, pravidla ukládání a sedm uložených položek" loading="lazy"><figcaption>Zapnutá historie (ukázková data).</figcaption></figure><figure><img src="../assets/history-off.png" alt="Záložka Historie ve výchozím vypnutém stavu s vysvětlením, že se schránka nesleduje" loading="lazy"><figcaption>Výchozí stav: vypnuto.</figcaption></figure><figure><img src="../assets/clipboard.png" alt="Záložka Pure Clipboard: Auto Copy, integrace, ochrana citlivých údajů a karty Termux a Terminal" loading="lazy"><figcaption>Integrace jsou volitelné a vypnuté, dokud je nezapnete.</figcaption></figure></div></section>
+<section><h2>Systémové požadavky</h2><ul class="plain"><li>Mac s čipem Apple (Apple Silicon).</li><li>macOS 14 nebo novější. Vyzkoušeno na macOS 27; starší verze zatím nejsou ověřené.</li><li>Intel Macy zatím nejsou podporované.</li></ul></section>
+<section><h2>Instalace</h2><p class="intro">Až bude k dispozici podepsané vydání, instalace bude jednoduchá:</p><ol class="plain"><li>Stáhněte soubor .dmg a ověřte jeho SHA-256 (hodnota bude uvedena vedle odkazu).</li><li>Otevřete obraz a přetáhněte Pure Clipboard do složky Applications.</li><li>Spusťte aplikaci z Applications. Žádná funkce se nezapne sama.</li></ol><p class="note">Dnes existuje jen testovací sestavení podepsané ad-hoc, které není oficiálním stažením.</p></section>
+<section><h2>Časté otázky</h2><details><summary>Sleduje Pure Clipboard moji schránku?</summary><p>Jen když zapnete historii, a jen dokud je aplikace spuštěná. Ve výchozím stavu je historie vypnutá a schránka se nesleduje.</p></details><details><summary>Kam se ukládají data?</summary><p>Do složky ~/Library/Application Support/PureClipboard na vašem Macu. Nic se neposílá na internet.</p></details><details><summary>Ukládají se hesla ze správce hesel?</summary><p>Ne. Obsah označený jako soukromý nebo dočasný se přeskočí. Text se navíc prověřuje na hesla a tokeny; spolehlivé rozpoznání ale nelze zaručit.</p></details><details><summary>Ukládají se kopie mých souborů?</summary><p>Ne. Z Finderu se ukládá jen odkaz na originál. Když originál zmizí, aplikace to ukáže.</p></details><details><summary>Jsou obrázky a PDF v bezpečí?</summary><p>Ukládají se jen po zvláštním souhlasu a po kontrole OCR v Macu. OCR nerozpozná rukopis, QR kódy ani tajné údaje, které nejsou text, takže tuto funkci povolte jen vědomě.</p></details><details><summary>Funguje to na Intel Macu, Windows nebo Androidu?</summary><p>Ne. Podporovaný je Apple Silicon s macOS 14 nebo novějším. Jiné platformy zatím nejsou ověřené.</p></details><details><summary>Je aplikace notarizovaná?</summary><p>Zatím ne. Podepsané a notarizované vydání čeká na placený účet Apple Developer. Do té doby se nestahuje z webu.</p></details></section>
+<section class="log"><h2>Změny</h2><h3>v0.7.0<time>2026-10-30</time></h3><ul class="plain"><li>Historie systémové schránky (vypnutá ve výchozím stavu): text, formátovaný text, obrázky, PDF, soubory a složky jako odkazy.</li><li>Hledání, obnovení do schránky, mazání, pozastavení a limity.</li><li>Ochrana citlivých údajů, respektování označení dočasného obsahu, OCR v Macu pro obrázky a PDF.</li></ul><h3>v0.6.0<time>2026-10-30</time></h3><ul class="plain"><li>Termux: přenos textu mezi telefonem a Macem na výslovný příkaz.</li></ul><h3>v0.5.0<time>2026-10-30</time></h3><ul class="plain"><li>Pure Remote: přehled provozu Tailscale. Příprava distribuce.</li></ul><h3>v0.1.0–0.4.0<time>2026-10</time></h3><ul class="plain"><li>Konfigurace, Claude Code, Codex CLI, Apple Terminal (pclip) a ruční kopírování.</li></ul></section>
+</main>
+<footer>PURE · Lab</footer>
+</div>
+</body>
+</html>

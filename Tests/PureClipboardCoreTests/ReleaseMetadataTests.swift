@@ -141,3 +141,28 @@ private func run(_ executable: String, _ arguments: [String]) throws -> (status:
         #expect(!marketing.localizedCaseInsensitiveContains("zdarma"))
     }
 }
+
+@Suite struct Milestone5ReleaseTests {
+    @Test func changelogAndDocsMatchTheCurrentVersion() throws {
+        #expect(try text("CHANGELOG.md").contains("## \(PureClipboardVersion.string)"))
+        let history = try text("docs/HISTORIE.md")
+        #expect(history.contains("Ve výchozím stavu vypnuto") && history.contains("OCR nenajde všechno"))
+    }
+
+    @Test func webPackageHasNoWorkingDownloadLinkYet() throws {
+        for lang in ["cs", "en"] {
+            let page = try text("web/pure-clipboard/\(lang)/index.html")
+            #expect(!page.contains(".dmg\""), "stránka \(lang) nesmí odkazovat na DMG před finálním vydáním")
+            #expect(page.contains("aria-disabled=\"true\""))
+        }
+    }
+
+    @Test func dmgScriptLabelsAdHocBuildsAndDoesNotClaimNotarizationForSignedOnes() throws {
+        let script = try text("scripts/make-dmg.sh")
+        #expect(script.contains("adhoc-TEST") && script.contains("if (( ADHOC ))"))
+        // The "not notarized" wording exists only inside the ad-hoc branches.
+        let signedBranch = try #require(script.components(separatedBy: "else\n  cat > \"$STAGE/PŘEČTĚTE.txt\"").dropFirst().first)
+        #expect(!signedBranch.prefix(400).contains("notarizovan"))
+        #expect(try text("scripts/notarize.sh").contains(".sha256"))
+    }
+}

@@ -1,0 +1,164 @@
+{
+  "lang": "en",
+  "locale": "en_GB",
+  "url": "https://www.studiopuresound.cz/en/lab/pure-clipboard/",
+  "alternate": "https://www.studiopuresound.cz/cs/lab/pure-clipboard/",
+  "seo": {
+    "title": "Pure Clipboard — PURE",
+    "description": "Pure Clipboard is a native macOS app with an optional clipboard history that is off by default and stays on your Mac.",
+    "ogTitle": "Pure Clipboard — PURE",
+    "ogDescription": "Clipboard history for macOS. Off until you turn it on. Nothing leaves your Mac.",
+    "ogImageAlt": "Pure Clipboard app window showing the clipboard history (sample data)"
+  },
+  "hero": {
+    "eyebrow": "PURE / LAB",
+    "title": "Pure Clipboard.",
+    "tagline": "Clipboard history on your Mac. Off until you turn it on.",
+    "status": "In development · v0.7.0",
+    "downloadLabel": "Download coming soon",
+    "downloadNote": "The signed and notarized release for Apple silicon is not ready yet. The download button will appear when it is."
+  },
+  "heroCaption": "A real app window with sample data. It does not read your clipboard or account.",
+  "intro": "Pure Clipboard remembers what you copied and puts it back with one click. It is a native macOS app with no account, no cloud and no analytics.",
+  "featuresTitle": "What it does",
+  "features": [
+    {
+      "title": "Clipboard history",
+      "text": "Text, rich text, images, PDFs, and files or folders from Finder, including multiple selections. For files only a link to the original is stored, never a copy."
+    },
+    {
+      "title": "Search and restore",
+      "text": "Find an item by word, app or file name and put it back on the clipboard with one click. If an original is gone, the app says so plainly."
+    },
+    {
+      "title": "Under your control",
+      "text": "Default limits: 100 items and 30 days. Set the size of an item and of the whole store, pause the history, delete one item or everything."
+    },
+    {
+      "title": "Skips what is sensitive",
+      "text": "Content marked private or transient by a password manager is never stored. Text is checked for passwords, keys and tokens before it is saved."
+    },
+    {
+      "title": "AI and terminal on request",
+      "text": "Optionally copies the final answer from Claude Code and Codex CLI, or a command's output through pclip. Termux on your phone transfers text only when you run a command."
+    },
+    {
+      "title": "Pure Remote",
+      "text": "An overview of Tailscale connections between this Mac and your devices. It reads local state only and stores nothing."
+    }
+  ],
+  "privacyTitle": "Privacy",
+  "privacy": [
+    "The history is off by default. The clipboard is watched only after you explicitly turn it on, and only while the app is running.",
+    "Everything stays on this Mac in files readable only by you. Content and diagnostics are never sent to the cloud, and the app has no network code.",
+    "Images and PDFs are stored only after a separate consent. Before saving, the app scans them with on-device text recognition (OCR). OCR cannot find everything, so we do not promise that no secret can pass through an image.",
+    "Sensitive-data protection is a helper, not a guarantee. When in doubt, an item is not stored."
+  ],
+  "requirementsTitle": "System requirements",
+  "requirements": [
+    "A Mac with an Apple chip (Apple silicon).",
+    "macOS 14 or later. Tested on macOS 27; older versions are not verified yet.",
+    "Intel Macs are not supported yet."
+  ],
+  "installTitle": "Installation",
+  "installIntro": "Once the signed release is available, installation will be simple:",
+  "install": [
+    "Download the .dmg and verify its SHA-256 (the value will be shown next to the link).",
+    "Open the image and drag Pure Clipboard to the Applications folder.",
+    "Launch the app from Applications. No feature turns itself on."
+  ],
+  "installNote": "Today only a test build signed ad hoc exists; it is not an official download.",
+  "faqTitle": "FAQ",
+  "faq": [
+    {
+      "q": "Does Pure Clipboard watch my clipboard?",
+      "a": "Only when you turn the history on, and only while the app is running. By default the history is off and the clipboard is not watched."
+    },
+    {
+      "q": "Where is the data stored?",
+      "a": "In ~/Library/Application Support/PureClipboard on your Mac. Nothing is sent over the internet."
+    },
+    {
+      "q": "Are passwords from a password manager stored?",
+      "a": "No. Content marked private or transient is skipped. Text is also checked for passwords and tokens, but reliable detection cannot be guaranteed."
+    },
+    {
+      "q": "Are copies of my files stored?",
+      "a": "No. From Finder only a link to the original is stored. If the original disappears, the app shows it."
+    },
+    {
+      "q": "Are images and PDFs safe?",
+      "a": "They are stored only after a separate consent and an on-device OCR check. OCR does not recognise handwriting, QR codes or secrets that are not text, so enable this deliberately."
+    },
+    {
+      "q": "Does it work on Intel Macs, Windows or Android?",
+      "a": "No. Apple silicon with macOS 14 or later is supported. Other platforms are not verified yet."
+    },
+    {
+      "q": "Is the app notarized?",
+      "a": "Not yet. The signed and notarized release is waiting for a paid Apple Developer account. Until then it is not offered for download."
+    }
+  ],
+  "changelogTitle": "Changelog",
+  "changelog": [
+    {
+      "version": "0.7.0",
+      "date": "2026-10-30",
+      "items": [
+        "System clipboard history (off by default): text, rich text, images, PDFs, files and folders as links.",
+        "Search, restore to clipboard, delete, pause and limits.",
+        "Sensitive-data protection, respect for transient-content markers, on-device OCR for images and PDFs."
+      ]
+    },
+    {
+      "version": "0.6.0",
+      "date": "2026-10-30",
+      "items": [
+        "Termux: text transfer between phone and Mac on explicit command."
+      ]
+    },
+    {
+      "version": "0.5.0",
+      "date": "2026-10-30",
+      "items": [
+        "Pure Remote: Tailscale traffic overview. Distribution groundwork."
+      ]
+    },
+    {
+      "version": "0.1.0–0.4.0",
+      "date": "2026-10",
+      "items": [
+        "Configuration, Claude Code, Codex CLI, Apple Terminal (pclip) and manual copying."
+      ]
+    }
+  ],
+  "images": [
+    {
+      "file": "assets/app-preview.png",
+      "alt": "Pure Clipboard app window: History tab with stored items (sample data)",
+      "caption": "Real app window."
+    },
+    {
+      "file": "assets/hero-preview.png",
+      "alt": "Pure Clipboard: the app window with the clipboard history next to the page headline",
+      "caption": "Illustrative composition with a real app window and sample data."
+    },
+    {
+      "file": "assets/history-on.png",
+      "alt": "History tab with history turned on: switch, storage rules and seven stored items",
+      "caption": "History turned on (sample data)."
+    },
+    {
+      "file": "assets/history-off.png",
+      "alt": "History tab in its default off state explaining that the clipboard is not watched",
+      "caption": "Default state: off."
+    },
+    {
+      "file": "assets/clipboard.png",
+      "alt": "Pure Clipboard tab: Auto Copy, integrations, sensitive-data protection and the Termux and Terminal cards",
+      "caption": "Integrations are optional and off until you turn them on."
+    }
+  ],
+  "footer": "PURE · Lab",
+  "backLabel": "← Lab"
+}

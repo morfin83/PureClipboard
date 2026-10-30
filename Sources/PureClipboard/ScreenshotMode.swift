@@ -39,7 +39,7 @@ enum ScreenshotMode {
 
     private static func render(config: PureClipboardConfig, configURL: URL, section: StudioSection, name: String, into directory: URL) {
         let store = ConfigFileStore(url: configURL)
-        try? store.save(ConfigDocument(config: config), expectedFingerprint: (try? store.load().fingerprint))
+        _ = try? store.save(ConfigDocument(config: config), expectedFingerprint: (try? store.load().fingerprint))
         let model = AppModel(store: store, monitoring: false)
         let view = ContentView(section: section, scrolling: false)
             .environment(model)

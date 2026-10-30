@@ -116,18 +116,26 @@ Omezení a neověřeno:
 - Na skutečném S25 to **nebylo spuštěno** (z Macu k telefonu se nepřipojuji; SSH klíč telefonu nemám). Ověřeno: celý Mac strana se skutečným pomocným programem a cestou s mezerou + skript `pcr` spuštěný s nahrazeným `ssh` a `termux-clipboard-*`. První skutečný běh provede uživatel: `pcr doctor`.
 - Vyžaduje v Termuxu `openssh`, `termux-api` a aplikaci Termux:API, v Tailscale dosažitelný Mac a SSH klíč telefonu v `authorized_keys` (už existuje, jeden klíč ed25519; nezkoumáno, zda je to klíč telefonu).
 - Kdo má ten SSH klíč, má na Macu už beze mě plný přístup; kanál tedy nezvyšuje práva, jen nabízí pohodlný postup.
-- Další zařízení (Android TV, budoucí Windows) zatím nejsou řešena; přenos jde jen mezi Macem a telefonem. Historie schránky zůstává „připravuje se“.
+- Další zařízení (Android TV, budoucí Windows) zatím nejsou řešena; přenos jde jen mezi Macem a telefonem. Historie schránky: viz Milník 5.
+
+## Milník 5 — historie schránky, vydávaný produkt, web, GitHub (v0.7.0) ✅ (kromě kroků závislých na placeném účtu Apple a reálném S25 – viz STATUS.md)
+
+- **Historie systémové schránky**: ve výchozím stavu vypnutá, spouští se výslovně, běží jen při běžící aplikaci. Text, formátovaný text, obrázky, PDF (zvláštní souhlas, OCR na zařízení) a soubory/složky jen jako odkazy. Limity 100 položek / 30 dní / 10 MB / 200 MB, hledání, obnovení, mazání, pozastavení, respektování označení dočasného obsahu, sken citlivých údajů (vždy u textu), atomické zápisy, 0700/0600, `flock`, odložení poškozeného indexu. Podrobně [docs/HISTORIE.md](docs/HISTORIE.md). Dřívější tvrzení „aplikace nesleduje schránku“ je nahrazeno: sleduje se jen při zapnuté historii a běžící aplikaci.
+- Konfigurace: nepovinný `clipboardHistory`; `global.historyLimit` je zachován jen pro kompatibilitu.
+- Distribuce: ad-hoc testovací DMG s pozadím PURE; `notarize.sh` přepočítá SHA-256 po staplování; postup pro Developer ID v docs/DISTRIBUCE.md.
+- Web: `web/pure-clipboard/` (CS/EN stránky, texty, SEO, grafika, předávací dokument pro Codex). Živý web nebyl změněn.
+- Podporováno: Apple Silicon, macOS 14+ (ověřeno na macOS 27). Neověřeno/nepodporováno: Intel, Windows, Android, Codex Desktop.
 
 ## Závazné požadavky na veřejnou distribuci
 
 Stav: **příprava hotová, release zatím nevytvářet ani nepublikovat.**
 
-1. **Instalační DMG** — *skript připraven (`make-dmg.sh --create`), DMG nevytvořeno* (odkaz na `/Applications`; pozadí v PureStudio stylu nebylo děláno, jen odkaz a návod).
+1. **Instalační DMG** — ✅ **testovací ad-hoc DMG vytvořeno lokálně** (Milník 5; odkaz na Applications, návod, pozadí PURE; označeno `-adhoc-TEST`, **nepublikovat**). Podepsané a notarizované DMG: ⏳ čeká na placený Apple Developer Program.
 2. **Vlastní ikona** — ✅ hotovo (`Resources/AppIcon.icns`).
 3. **Identita a verzování** — ✅ `studio.pure.clipboard`, semver + rostoucí `CFBundleVersion`, kontrola shody a testy. Mechanismus aktualizací zatím není (připravenost: stabilní ID, rostoucí build, „Aktualizovat“ u pomocného programu; doporučeno Sparkle po Developer ID, viz DISTRIBUCE.md).
 4. **Ad-hoc podpis** — ✅ výchozí build. Nenahrazuje notarizaci a dokumenty to uvádějí.
 5. **Budoucí Developer ID + notarizace** — ✅ skripty připraveny (`CODESIGN_IDENTITY`, `notarize.sh`), **neověřeno proti Apple**.
 6. **SHA-256** — ✅ `make-dmg.sh --create` vytvoří `.dmg.sha256`; postup ověření je v návodu.
 7. **Instalační návod pro začátečníky** — ✅ `docs/INSTALACE.md` včetně Gatekeeperu.
-8. **Texty pro web PureStudio** — ✅ `docs/WEB-PURESTUDIO.md` (hodnoty `{{VERZE}}`, `{{SHA256}}`, `{{KONTAKT}}` se doplní při vydání).
+8. **Texty pro web PureStudio** — ✅ `docs/WEB-PURESTUDIO.md` + kompletní webový balík `web/pure-clipboard/` (CS/EN, grafika, `HANDOFF-CODEX.md`); stažení neaktivní do vydání.
 9. **Architektury** — primárně Apple Silicon; Intel viz výše, samostatně k ověření.

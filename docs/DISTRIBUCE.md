@@ -1,6 +1,6 @@
 # Distribuce Pure Clipboard – postup pro vydavatele
 
-Stav: **příprava hotová, nic nebylo vydáno ani publikováno.** DMG ani release se nevytváří, dokud to výslovně neurčí zadavatel. Všechny skripty to respektují: bez příznaku `--create` / `--submit` jen vypíšou plán.
+Stav (v0.7.0): **lokální testovací ad-hoc DMG existuje** (`dist/PureClipboard-0.7.0-arm64-adhoc-TEST.dmg`, ignorováno Gitem), **nic nebylo vydáno ani publikováno** a nevznikl GitHub Release. Podepsané a notarizované DMG **zbývá** a vyžaduje placený Apple Developer Program. Skripty bez `--create` / `--submit` jen vypíšou plán.
 
 Plnění závazných požadavků najdete v [PLAN.md](../PLAN.md).
 
@@ -9,7 +9,8 @@ Plnění závazných požadavků najdete v [PLAN.md](../PLAN.md).
 | Soubor | K čemu |
 |---|---|
 | `scripts/build-app.sh` | sestaví `build/PureClipboard.app` (výchozí: arm64, ad-hoc podpis) |
-| `scripts/make-dmg.sh` | připraví DMG s odkazem na Applications a SHA-256 (jen s `--create`) |
+| `scripts/make-dmg.sh` | DMG s pozadím PURE, odkazem na Applications, návodem a SHA-256 (jen s `--create`); ad-hoc app → název `…-adhoc-TEST`, popisky „testovací“; Developer ID app → běžný název bez textu o nenotarizaci |
+| `scripts/make-dmg-background.swift` | pozadí okna DMG |
 | `scripts/notarize.sh` | notarizace DMG podepsaného Developer ID (jen s `--submit`) |
 | `scripts/make-icon.swift` | vygeneruje ikonu (`iconutil -c icns` ji převede na `Resources/AppIcon.icns`) |
 | `Resources/Info.plist` | identita, verze, kategorie, ikona |
@@ -28,7 +29,16 @@ Plnění závazných požadavků najdete v [PLAN.md](../PLAN.md).
 ### Dnes: ad-hoc (bez placeného účtu)
 `scripts/build-app.sh` podepisuje `codesign --sign -`. Ad-hoc podpis chrání celistvost balíčku, **nedokazuje identitu vydavatele a nenahrazuje notarizaci**. Gatekeeper takovou aplikaci při prvním spuštění zablokuje; uživatel ji musí povolit ručně (`docs/INSTALACE.md`). Nikdy netvrďte, že je aplikace „ověřená Applem“.
 
-### Později: Developer ID + notarizace
+### Zbývající krok: Developer ID, hardened runtime, notarizace, stapling (vyžaduje placený účet)
+Přesný postup (jednou: certifikát „Developer ID Application“ v klíčence a `xcrun notarytool store-credentials pure-clipboard --apple-id … --team-id …`):
+1. `CODESIGN_IDENTITY="Developer ID Application: Jméno (TEAMID)" scripts/build-app.sh` – hardened runtime + časové razítko.
+2. `CODESIGN_IDENTITY="…" scripts/make-dmg.sh --create` – běžný název bez „TEST“.
+3. `NOTARY_PROFILE=pure-clipboard scripts/notarize.sh dist/PureClipboard-<v>-arm64.dmg --submit` – odeslání, čekání, `stapler staple`, `stapler validate`, `spctl` a **nový výpočet SHA-256** (soubor `.sha256` se přepíše).
+4. Ověření Gatekeeperem: `spctl -a -t open --context context:primary-signature -vv <dmg>` a po instalaci `spctl -a -vv "/Applications/Pure Clipboard.app"`.
+5. Zveřejnit **až** konečný SHA-256 (po staplování) vedle odkazu a aktivovat tlačítko na webu (`web/pure-clipboard/HANDOFF-CODEX.md`).
+Tento postup **nebyl proti Apple spuštěn**.
+
+### Podrobnosti Developer ID
 Vyžaduje placený Apple Developer Program.
 
 ```bash

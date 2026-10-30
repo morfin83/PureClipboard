@@ -1,3 +1,5 @@
+> **Aktuální verze webových podkladů je v `web/pure-clipboard/` (CS+EN, grafika, předávací dokument pro Codex).** Tento soubor je starší textový koncept; tlačítko ke stažení nepublikovat před finálním Developer ID DMG.
+
 # Texty pro veřejnou stránku Pure Clipboard (web PureStudio)
 
 Hotové české texty k vložení na stránku. Hodnoty ve složených závorkách (`{{…}}`) se doplní při vydání. Texty nic neslibují, co aplikace neumí (viz „Co nepsat“ na konci).
@@ -29,7 +31,7 @@ Pure Clipboard je malá nativní aplikace pro Mac. Pomáhá přenášet odpověd
 ## Co umí
 
 ### Ruční přenos bez starostí
-Označte text v ChatGPT, Claude, Gemini nebo Terminálu, stiskněte `⌘C`, přepněte se `⌘Tab` a vložte `⌘V`. Pure Clipboard do toho nezasahuje a nečte vaši schránku. Nastavení a ochranu spravujete na jednom místě.
+Označte text v ChatGPT, Claude, Gemini nebo Terminálu, stiskněte `⌘C`, přepněte se `⌘Tab` a vložte `⌘V`. Pure Clipboard do toho nezasahuje a nečte vaši schránku, dokud sami nezapnete volitelnou historii. Nastavení a ochranu spravujete na jednom místě.
 
 ### Samočinné kopírování z Claude Code a Codexu
 Po dokončení odpovědi může Pure Clipboard její finální text zkopírovat za vás. Funguje přes oficiální hooky obou nástrojů, nikoli čtením obrazovky nebo odposlechem kláves. Zapnete ho přepínačem **Auto Copy** a každá integrace se instaluje jen po zobrazení plánu změn a se zálohou.
@@ -108,6 +110,9 @@ Aplikace zatím není notarizovaná. Postup povolení je v návodu k instalaci.
 **Jak aplikaci úplně odstraním?**
 V aplikaci u každé integrace klikněte na **Odebrat**, potom přesuňte aplikaci do koše. Volitelně smažte `~/Library/Application Support/PureClipboard` (zálohy).
 
+**Sleduje Pure Clipboard moji schránku?**
+Jen když výslovně zapnete historii schránky (výchozí je vypnuto) a jen dokud je aplikace spuštěná. Vše zůstává na vašem Macu.
+
 **Bude i pro Windows nebo Android?**
 Plánujeme samostatné aplikace pro Windows 11 a Android a přenos textu mezi zařízeními. Zatím nejsou k dispozici.
 
@@ -136,7 +141,8 @@ Zatím ne. Nastavení limitu je připravené, funkce se připravuje.
 ## Co nepsat (nepravdivá nebo neověřená tvrzení)
 
 - že je aplikace **notarizovaná** nebo „ověřená Applem“;
-- že podporuje **Intel**, **Windows**, **Android**, **Codex Desktop** nebo **historii schránky**;
+- že podporuje **Intel**, **Windows**, **Android** nebo **Codex Desktop**;
+- že historie je „vždy zapnutá“ nebo že ochrana citlivých údajů v obrázcích je spolehlivá;
 - že „zabrání všem únikům“: ochrana je heuristická a platí jen pro automatické kopírování a `pclip`;
 - že automaticky kopíruje „všechno“ z Terminálu: kopíruje se jen příkaz spuštěný přes `pclip`;
 - že se aktualizuje samo (zatím ne);
