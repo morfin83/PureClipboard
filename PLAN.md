@@ -97,7 +97,7 @@ Rozsah: splnit připravitelné části závazných požadavků níže. **Žádn�
 - Intel: univerzální build se sestaví a x86_64 část pomocného programu běží pod Rosettou; **na skutečném Intelu neověřeno**, Xcode hlásí x86_64 jako zastaralé. Podporu neslibovat.
 - Vyzkoušeno jen na macOS 27 (deklarované minimum 14.0 neověřeno).
 
-## Milník 4 — Termux: komunikace S25 ↔ Mac ✅ (Mac strana a skript ověřeny simulací; reálný telefon čeká na první použití)
+## Milník 4 — Termux: komunikace S25 ↔ Mac ✅ (Mac strana, skript i reálný S25 ověřeny; viz níže)
 
 Zadání uživatele: Termux slouží **jen** ke komunikaci S25 s ostatními zařízeními. Rozhodnuto: obousměrně; spouštěno **výslovnými příkazy v Termuxu**; přístup přes **stávající SSH klíč, žádná změna SSH ani `authorized_keys`**; přijatý text jde do **přijaté pošty** v aplikaci (do schránky Macu až tlačítkem Kopírovat).
 
@@ -113,7 +113,7 @@ Implementace:
 - „Instalace“ kanálu = jen kopie pomocného programu a soukromé složky. **Žádné zásahy do SSH, Tailscale ani cizích souborů**; testy ověřují, že `~/.ssh/authorized_keys` zůstal beze změny.
 
 Omezení a neověřeno:
-- Na skutečném S25 to **nebylo spuštěno** (z Macu k telefonu se nepřipojuji; SSH klíč telefonu nemám). Ověřeno: celý Mac strana se skutečným pomocným programem a cestou s mezerou + skript `pcr` spuštěný s nahrazeným `ssh` a `termux-clipboard-*`. První skutečný běh provede uživatel: `pcr doctor`.
+- Ověření na skutečném S25 (30. 10. 2026, provedl uživatel): `pcr frommac` → text ve schránce telefonu; `pcr tomac` → 23 znaků v přijaté poště na Macu, `rc=0`; prázdná schránka odmítnuta bez zásahu. Neověřeno: návratový kód u prázdné schránky a `pcr doctor`. Původně jsem z Macu k telefonu nepřipojoval (SSH klíč telefonu nemám). Ověřeno: celý Mac strana se skutečným pomocným programem a cestou s mezerou + skript `pcr` spuštěný s nahrazeným `ssh` a `termux-clipboard-*`. První skutečný běh provede uživatel: `pcr doctor`.
 - Vyžaduje v Termuxu `openssh`, `termux-api` a aplikaci Termux:API, v Tailscale dosažitelný Mac a SSH klíč telefonu v `authorized_keys` (už existuje, jeden klíč ed25519; nezkoumáno, zda je to klíč telefonu).
 - Kdo má ten SSH klíč, má na Macu už beze mě plný přístup; kanál tedy nezvyšuje práva, jen nabízí pohodlný postup.
 - Další zařízení (Android TV, budoucí Windows) zatím nejsou řešena; přenos jde jen mezi Macem a telefonem. Historie schránky: viz Milník 5.
