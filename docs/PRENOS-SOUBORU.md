@@ -26,7 +26,7 @@ Zdrojové soubory se jen čtou. Aplikace nepřidává žádný síťový kód an
 | Kabel USB C–USB C | **neměřeno** (odhad 25–35 MB/s s USB 2.0, 60–150 MB/s s USB 3 kabelem) |
 
 ## Omezení a neověřeno
-- Reálný test celé aplikace s pauzou a pokračováním na S25 čeká na zapnutý ADB přes Wi‑Fi (viz níže). Logika je pokryta testy s falešným telefonem.
+- Ověřeno na skutečném S25 přes Wi‑Fi (30. 10. 2026): 40MB soubor, pauza po 12,6 MB, pokračování od téhož místa, průměr 7,3 MB/s, SHA‑256 na telefonu sedí, dočasný soubor i pracovní složka smazány. Logika je navíc pokryta testy s falešným telefonem.
 - Kabel (USB) je připravený, ale **nebyl vyzkoušen**.
 - Dílové posílání je sekvenční (jeden proud). Souběžné proudy a souběžný kabel + Wi‑Fi nejsou.
 - Úložiště telefonu musí mít místo na velikost souboru + 64 MB.
