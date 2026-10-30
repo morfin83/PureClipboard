@@ -98,3 +98,7 @@ Termux na S25 slouží jen ke komunikaci s Macem. Přenos běží **jen na výsl
 Přijatý text se nikdy sám nezapíše do schránky Macu; položky v poště se po hodině smažou. Citlivé údaje se v obou směrech nepřenášejí. Terminálově: `pureclipboard-hook install-termux --apply`, `status-termux`, `uninstall-termux --apply`; `termux-send` zařadí text ze stdin k odeslání.
 
 Skutečný test na S25: viz STATUS.md (výsledek je tam uveden přesně). První kontrola: `pcr doctor`.
+
+## Licence
+
+Pure Clipboard is released under the MIT License. See [LICENSE](LICENSE). The app uses only Apple system frameworks and bundles no third-party code.
