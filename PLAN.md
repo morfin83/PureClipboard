@@ -126,6 +126,14 @@ Omezení a neověřeno:
 - Web: `web/pure-clipboard/` (CS/EN stránky, texty, SEO, grafika, předávací dokument pro Codex). Živý web nebyl změněn.
 - Podporováno: Apple Silicon, macOS 14+ (ověřeno na macOS 27). Neověřeno/nepodporováno: Intel, Windows, Android.
 
+## Milník 6 — přenos souborů Mac → telefon v Pure Remote (větev `milestone-6-file-transfer`, zatím neslučeno)
+
+- Zadání uživatele: vidět přesně co a kam se kopíruje, pauza a pokračování **bez nového začátku**, rychlost u každého souboru, „superrychlé“ odesílání; základ pro kabel, zaměření na bezdrátové spojení.
+- Rozhodnuto: přenos přes **ADB po dílech** (bez nového serveru na telefonu), kabel USB má přednost, Wi‑Fi je záloha, mobilní data jen po potvrzení. Podrobnosti, měření a omezení: [docs/PRENOS-SOUBORU.md](docs/PRENOS-SOUBORU.md).
+- Naměřeno: LTE 1,4 MB/s, Wi‑Fi 6,8 MB/s (dělení na díly ≈ −4 %); USB neměřeno.
+- Implementace: `Sources/PureClipboardCore/Transfer/` (model, úložiště, vrstva `adb`, engine), karta `TransferCard` v záložce Pure Remote, příkaz `transfer-enqueue` v pomocném programu. Testy: 38 nových (falešný telefon: pauza, restart, ztracená odpověď, výpadek, špatný součet, nepřepsání souboru, mobilní data, zrušení, změněný zdroj, málo místa).
+- **Neověřeno:** reálný běh s pauzou na S25 (port ADB 5555 byl při pokusu zavřený; test `PURECLIPBOARD_REAL_PHONE=… swift test --filter RealPhone` je připravený), kabel USB, úprava Rychlé akce (čeká na potvrzení).
+
 ## Závazné požadavky na veřejnou distribuci
 
 Stav: **příprava hotová, release zatím nevytvářet ani nepublikovat.**

@@ -327,6 +327,25 @@ func runManagement(action: String, target: HookTarget, _ arguments: [String]) ->
 }
 
 let arguments = Array(CommandLine.arguments.dropFirst())
+/// Hands files to the running app, which sends them to the phone (Finder quick action, scripts). Reads only paths.
+func runTransferEnqueue(_ arguments: [String]) -> Never {
+    let paths = arguments.filter { !$0.hasPrefix("--") }
+    guard !paths.isEmpty else { fail("Použití: transfer-enqueue SOUBOR [SOUBOR…]") }
+    let files = paths.filter {
+        var isDirectory: ObjCBool = false
+        return FileManager.default.fileExists(atPath: $0, isDirectory: &isDirectory) && !isDirectory.boolValue
+    }
+    guard !files.isEmpty else { fail("Pure Clipboard: žádný z vybraných zdrojů není soubor (složky se neodesílají).") }
+    let store = TransferStore(supportDirectory: ConfigFileStore.defaultURL().deletingLastPathComponent())
+    do {
+        let count = try store.enqueueRequest(paths: files)
+        printLine("Pure Clipboard: \(count) souborů předáno aplikaci k odeslání do telefonu.")
+        exit(0)
+    } catch {
+        fail("Pure Clipboard: požadavek se nepodařilo uložit (\(error.localizedDescription)).")
+    }
+}
+
 let command = arguments.first ?? ""
 let rest = Array(arguments.dropFirst())
 
@@ -341,6 +360,8 @@ case "termux-receive", "termux-send", "termux-fetch":
     runTermux(command, rest)
 case "termux-script":
     runTermuxScript(rest)
+case "transfer-enqueue":
+    runTransferEnqueue(rest)
 case "version":
     printLine(PureClipboardVersion.string)
 default:
@@ -359,6 +380,7 @@ default:
       termux-fetch [--for s25]          vydá jednou text odeslaný z Macu (stdout)
       termux-send [--to s25]            text ze stdin zařadí k odeslání do telefonu
       termux-script [--host H]          vypíše skript pcr pro Termux
+      transfer-enqueue SOUBOR…          předá soubory aplikaci k odeslání do telefonu
       status-/install-/uninstall-termux kanál S25 ↔ Mac
       status-<claude|codex|terminal>    stav integrace
       install-<claude|codex|terminal>   bez --apply pouze ukáže plán

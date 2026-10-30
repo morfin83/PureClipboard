@@ -25,6 +25,7 @@ final class AppModel {
     let terminal: TerminalController
     let termux: TermuxController
     let remote = RemoteController()
+    let transfer: TransferController
     let history: HistoryController
 
     private var document: ConfigDocument?
@@ -37,6 +38,7 @@ final class AppModel {
         terminal = TerminalController(store: store)
         termux = TermuxController(store: store)
         history = HistoryController(configURL: store.url, monitoring: monitoring)
+        transfer = TransferController(supportDirectory: store.url.deletingLastPathComponent(), monitoring: monitoring)
         reload()
     }
 

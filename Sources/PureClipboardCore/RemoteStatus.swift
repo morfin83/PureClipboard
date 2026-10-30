@@ -38,6 +38,7 @@ public struct RemotePeer: Decodable, Sendable, Identifiable {
     public let directAddress: String?
     public let relay: String?
     public let peerRelay: String?
+    public let addresses: [String]
 
     private enum CodingKeys: String, CodingKey {
         case id = "ID"
@@ -50,6 +51,7 @@ public struct RemotePeer: Decodable, Sendable, Identifiable {
         case directAddress = "CurAddr"
         case relay = "Relay"
         case peerRelay = "PeerRelay"
+        case addresses = "TailscaleIPs"
     }
 
     public init(from decoder: Decoder) throws {
@@ -64,6 +66,7 @@ public struct RemotePeer: Decodable, Sendable, Identifiable {
         directAddress = try values.decodeIfPresent(String.self, forKey: .directAddress)
         relay = try values.decodeIfPresent(String.self, forKey: .relay)
         peerRelay = try values.decodeIfPresent(String.self, forKey: .peerRelay)
+        addresses = try values.decodeIfPresent([String].self, forKey: .addresses) ?? []
     }
 
     public var route: RemoteRoute {

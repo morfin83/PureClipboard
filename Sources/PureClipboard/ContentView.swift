@@ -45,6 +45,7 @@ struct ContentView: View {
                     HistorySection(config: config)
                 } else {
                     RemoteCard(enabled: config.integrations.pureRemote.enabled)
+                    TransferCard()
                 }
             }
             Text(footer)
