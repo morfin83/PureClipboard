@@ -106,7 +106,7 @@ public enum IntegrationID: String, CaseIterable, Identifiable, Sendable {
         case .claudeCode: "Odpovědi z relací Claude Code"
         case .codex: "Odpovědi z Codex CLI"
         case .pureRemote: "Provoz zařízení v Tailscale"
-        case .termux: "Schránka zařízení s Termuxem"
+        case .termux: "Přenos textu mezi S25 a Macem"
         }
     }
 }
@@ -117,7 +117,7 @@ public enum IntegrationMode {
         case "diagnostics": "Diagnostika"
         case "finalResponse": "Finální odpověď"
         case "actionResults": "Živý přehled"
-        case "localClipboard": "Lokální schránka"
+        case "localClipboard": "Výslovný přenos"
         default: nil
         }
     }

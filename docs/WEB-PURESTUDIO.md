@@ -43,6 +43,9 @@ Než se cokoli zkopíruje samo, projde text kontrolou: soukromé klíče, tokeny
 ### Více agentů najednou
 Když skončí několik relací současně, jedna druhou nepřepíše: schránku drží ta, která kopírovala první, a ostatní se bezpečně přeskočí.
 
+### Termux: text mezi telefonem a Macem
+Pošlete text z Termuxu na Androidu do Macu příkazem `pcr tomac` a naopak `pcr frommac`. Přenos běží jen na váš příkaz, přes váš vlastní SSH klíč a Tailscale. Přijatý text počká v aplikaci a do schránky ho dáte sami tlačítkem Kopírovat. Citlivé údaje se nepřenášejí. (Vyžaduje Termux, Termux:API a Tailscale; zatím nevyzkoušeno na všech telefonech.)
+
 ### Pure Remote: přehled spojení Tailscale
 (Vyžaduje nainstalovaný Tailscale.) Živý přehled zařízení ve vaší síti Tailscale a rychlosti odesílání a příjmu mezi tímto Macem a každým zařízením. Čte pouze místní stav, nic nenastavuje a nic neukládá.
 
@@ -60,7 +63,7 @@ Když skončí několik relací současně, jedna druhou nepřepíše: schránku
 
 - **Žádný internet.** Aplikace nenavazuje síťová spojení, neposílá statistiky ani chybová hlášení.
 - **Žádné sledování schránky.** Nečte schránku ostatních aplikací ani obrazovku, neodposlouchává klávesnici.
-- **Obsah se neukládá.** Zapisují se jen metadata poslední události (čas, výsledek, počet znaků). Jediná výjimka je `pclip`: výstup příkazu se na okamžik uloží do dočasného souboru čitelného jen vámi a po dokončení se smaže.
+- **Obsah se neukládá.** Zapisují se jen metadata poslední události (čas, výsledek, počet znaků). Výjimky: `pclip` (výstup příkazu se na okamžik uloží do dočasného souboru čitelného jen vámi a po dokončení se smaže) a Termux (text čekající v přijaté nebo odesílané poště, v soukromé složce, nejdéle hodinu).
 - **Vaše nastavení zůstává vaše.** Změny v cizích souborech (`~/.claude`, `~/.codex`, `~/.zshrc`) se dělají jen po potvrzení, se zálohou a jdou přesně vrátit zpět.
 - **Bez administrátorských oprávnění**, bez služeb běžících na pozadí.
 
@@ -115,6 +118,7 @@ Zatím ne. Nastavení limitu je připravené, funkce se připravuje.
 
 ## Novinky
 
+- **0.6.0** – Termux: přenos textu mezi S25 a Macem na výslovný příkaz.
 - **0.5.0** – Pure Remote: přehled spojení Tailscale; nová ikona; příprava distribuce.
 - **0.4.0** – Ruční kopírování jako hlavní způsob; `pclip` funguje i s vypnutým Auto Copy.
 - **0.3.0** – Apple Terminal (`pclip`), souběh více agentů bez přepisování schránky, Codex.
@@ -135,4 +139,5 @@ Zatím ne. Nastavení limitu je připravené, funkce se připravuje.
 - že podporuje **Intel**, **Windows**, **Android**, **Codex Desktop** nebo **historii schránky**;
 - že „zabrání všem únikům“: ochrana je heuristická a platí jen pro automatické kopírování a `pclip`;
 - že automaticky kopíruje „všechno“ z Terminálu: kopíruje se jen příkaz spuštěný přes `pclip`;
-- že se aktualizuje samo (zatím ne).
+- že se aktualizuje samo (zatím ne);
+- že Termux funguje na každém telefonu nebo „sám sleduje schránku telefonu“: jen výslovné příkazy `pcr`, vyžaduje Termux, `openssh`, `termux-api`, aplikaci Termux:API, Tailscale a SSH klíč; ověřeno simulací, ne na všech zařízeních.

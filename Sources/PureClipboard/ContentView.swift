@@ -25,6 +25,7 @@ struct ContentView: View {
                             HookCard(target: .claude)
                             HookCard(target: .codex)
                             TerminalCard()
+                            TermuxCard()
                             ConfigStatusCard()
                         } else {
                             RemoteCard(enabled: config.integrations.pureRemote.enabled)
@@ -178,7 +179,7 @@ struct IntegrationsCard: View {
     var body: some View {
         Card(title: "Integrace", symbol: "puzzlepiece.extension") {
             VStack(spacing: 0) {
-                ForEach(Array([IntegrationID.terminal, .claudeCode, .codex].enumerated()), id: \.element) { index, id in
+                ForEach(Array([IntegrationID.terminal, .claudeCode, .codex, .termux].enumerated()), id: \.element) { index, id in
                     if index > 0 { Divider().overlay(Theme.cardBorder) }
                     IntegrationRow(id: id, settings: config.integrations[id], masterOn: config.global.autoCopy, trailing: trailing(for: id)) { value in
                         model.update { $0.integrations[id].enabled = value }
@@ -196,6 +197,7 @@ extension IntegrationsCard {
         case .claudeCode: target = .claude
         case .codex: target = .codex
         case .terminal: return model.terminal.state.isInstalled ? "Příkaz pclip nainstalován" : "Příkaz pclip nenainstalován"
+        case .termux: return model.termux.state.isInstalled ? "Kanál S25 nainstalován" : "Kanál S25 nenainstalován"
         default: return "Neaktivní"
         }
         let hook = model.controller(for: target).state
@@ -246,6 +248,7 @@ private struct IntegrationRow: View {
     private var statusText: String {
         if !settings.enabled { return "\(id.summary) · vypnuto" }
         if id == .terminal { return "\(id.summary) · na příkaz pclip" }
+        if id == .termux { return "\(id.summary) · na příkaz pcr v Termuxu" }
         return masterOn ? "\(id.summary) · povoleno v konfiguraci" : "\(id.summary) · čeká na Auto Copy"
     }
 }

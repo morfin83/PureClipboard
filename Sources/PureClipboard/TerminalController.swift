@@ -68,8 +68,9 @@ final class TerminalController {
         let others = [HookTarget.claude, .codex].contains {
             ClaudeHookInstaller(paths: .standard(target: $0, configURL: store.url), target: $0).state().isRegistered
         }
+        let termux = TermuxChannelInstaller(supportDirectory: store.url.deletingLastPathComponent()).state().isInstalled
         do {
-            let report = try installer.uninstall(removeHelper: !others)
+            let report = try installer.uninstall(removeHelper: !(others || termux))
             notice = report.changed
                 ? "Integrace odebrána." + (report.backup.map { " Záloha: \($0.lastPathComponent)" } ?? "")
                 : "Integrace nebyla nainstalována."

@@ -73,7 +73,8 @@ final class HookController {
         notice = nil
         let other: HookTarget = target == .claude ? .codex : .claude
         let terminal = ZshIntegrationInstaller(paths: .standard(configURL: store.url)).state().isInstalled
-        let helperStillNeeded = installer(for: other).state().isRegistered || terminal
+        let termux = TermuxChannelInstaller(supportDirectory: store.url.deletingLastPathComponent()).state().isInstalled
+        let helperStillNeeded = installer(for: other).state().isRegistered || terminal || termux
         do {
             let report = try installer.uninstall(removeHelper: !helperStillNeeded)
             notice = report.changed

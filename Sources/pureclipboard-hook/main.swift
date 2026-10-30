@@ -83,6 +83,117 @@ func runTerminalCopy(_ arguments: [String]) -> Never {
     exit(0)
 }
 
+// MARK: Termux channel (S25 ↔ Mac). Always explicit commands run through the phone's existing SSH login.
+
+func termuxContext() -> (store: ConfigFileStore, configURL: URL, handler: TermuxChannelHandler, support: URL) {
+    let configURL = ConfigFileStore.defaultURL()
+    let support = configURL.deletingLastPathComponent()
+    let store = ConfigFileStore(url: configURL)
+    return (store, configURL, TermuxChannelHandler(store: store, mailbox: TermuxMailbox(supportDirectory: support)), support)
+}
+
+func termuxExitCode(_ outcome: HookOutcome) -> Int32 {
+    if outcome.result == .copied { return 0 }
+    switch outcome.reason {
+    case "nothing-to-fetch": return 3
+    case "config-unavailable", "integration-off": return 4
+    case "sensitive-content", "empty-message", "message-too-large", "payload-too-large", "invalid-device": return 5
+    default: return 1
+    }
+}
+
+func termuxReport(_ outcome: HookOutcome, success: String) {
+    let message: String
+    switch outcome.result {
+    case .copied: message = success.replacingOccurrences(of: "{n}", with: String(outcome.characters))
+    case .skipped:
+        message = outcome.reason == "integration-off"
+            ? "Pure Clipboard: Termux je v aplikaci vypnutý (zapněte přepínač Termux)."
+            : "Pure Clipboard: nic se nestalo – \(HookReasonLabel.text(outcome.reason))."
+    }
+    FileHandle.standardError.write(Data((message + "\n").utf8))
+}
+
+func termuxOption(_ name: String, in arguments: [String], default value: String) -> String {
+    guard let index = arguments.firstIndex(of: name), arguments.indices.contains(index + 1) else { return value }
+    return arguments[index + 1]
+}
+
+func runTermux(_ command: String, _ arguments: [String]) -> Never {
+    signal(SIGALRM) { _ in _exit(1) }
+    alarm(20)
+    let context = termuxContext()
+    var outcome: HookOutcome
+    switch command {
+    case "termux-receive":
+        let device = termuxOption("--from", in: arguments, default: "s25")
+        outcome = context.handler.receive(readStandardInput(limit: TermuxText.maxInputBytes), from: device)
+        termuxReport(outcome, success: "Pure Clipboard: text přijat do přijaté pošty ({n} znaků). Do schránky Macu ho zkopírujete v aplikaci.")
+    case "termux-send":
+        let device = termuxOption("--to", in: arguments, default: "s25")
+        outcome = context.handler.send(readStandardInput(limit: TermuxText.maxInputBytes), to: device)
+        termuxReport(outcome, success: "Pure Clipboard: text ({n} znaků) čeká na vyzvednutí telefonem (pcr frommac).")
+    default: // termux-fetch
+        let device = termuxOption("--for", in: arguments, default: "s25")
+        let result = context.handler.fetch(for: device)
+        outcome = result.outcome
+        if let text = result.text { FileHandle.standardOutput.write(Data(text.utf8)) }
+        termuxReport(outcome, success: "Pure Clipboard: doručeno ({n} znaků).")
+    }
+    HookEventRecord.write(outcome, besides: context.configURL, integration: .termux)
+    exit(termuxExitCode(outcome))
+}
+
+/// Prints the Termux script. Needs no switch and no config: it only renders text.
+func runTermuxScript(_ arguments: [String]) -> Never {
+    let context = termuxContext()
+    let helper = TermuxChannelInstaller(supportDirectory: context.support).helper
+    let host = termuxOption("--host", in: arguments, default: "")
+    let user = termuxOption("--user", in: arguments, default: NSUserName())
+    printLine(TermuxScript.render(helper: helper, user: user, host: host.isEmpty ? nil : host).trimmingCharacters(in: .newlines))
+    exit(0)
+}
+
+func runTermuxManagement(action: String, _ arguments: [String]) -> Never {
+    var apply = false
+    for argument in arguments {
+        if argument == "--apply" { apply = true } else { fail("Neznámý parametr: \(argument)") }
+    }
+    let configURL = ConfigFileStore.defaultURL()
+    let environment = ProcessInfo.processInfo.environment
+    let installer = TermuxChannelInstaller(supportDirectory: configURL.deletingLastPathComponent())
+    let selfURL = Bundle.main.executableURL ?? URL(fileURLWithPath: CommandLine.arguments[0])
+    do {
+        switch action {
+        case "status":
+            let state = installer.state()
+            printLine("integrace:  Termux (S25 ↔ Mac)")
+            printLine("pomocný program: \(state.helperInstalled ? installer.helper.path : "není nainstalován")")
+            printLine("pošta:      \(state.mailboxReady ? "připravena (přijato: \(state.inboxCount), k odeslání: \(state.outboxCount))" : "není připravena")")
+            printLine("skript pro Termux: pureclipboard-hook termux-script --host ADRESA_MACU")
+        default:
+            let report = action == "install"
+                ? try installer.install(bundledHelper: selfURL, dryRun: !apply)
+                : try installer.uninstall(
+                    dryRun: !apply,
+                    removeHelper: !otherIntegrationRegistered(excluding: "termux", environment: environment, configURL: configURL))
+            if report.steps.isEmpty { printLine("Není co měnit.") }
+            for step in report.steps { printLine("• \(step)") }
+            if !apply {
+                if report.changed { printLine("Nic se nezměnilo. Pro provedení přidejte --apply.") }
+            } else if report.changed {
+                printLine("Hotovo.")
+                if action == "install" {
+                    printLine("Na telefonu v Termuxu: ssh UŽIVATEL@ADRESA_MACU '\(installer.helper.path)' termux-script --host ADRESA_MACU > ~/pcr && chmod +x ~/pcr")
+                }
+            }
+        }
+    } catch {
+        fail(error.localizedDescription)
+    }
+    exit(0)
+}
+
 /// True if any integration other than `excluded` still points at the shared helper copy.
 func otherIntegrationRegistered(excluding excluded: String, environment: [String: String], configURL: URL) -> Bool {
     for target in HookTarget.allCases where target.rawValue != excluded {
@@ -91,6 +202,8 @@ func otherIntegrationRegistered(excluding excluded: String, environment: [String
     }
     if excluded != "terminal",
        ZshIntegrationInstaller(paths: .standard(configURL: configURL, environment: environment)).state().isInstalled { return true }
+    if excluded != "termux",
+       TermuxChannelInstaller(supportDirectory: configURL.deletingLastPathComponent()).state().isInstalled { return true }
     return false
 }
 
@@ -224,12 +337,17 @@ case "codex-stop":
     runStop(.codex, rest)
 case "terminal-copy":
     runTerminalCopy(rest)
+case "termux-receive", "termux-send", "termux-fetch":
+    runTermux(command, rest)
+case "termux-script":
+    runTermuxScript(rest)
 case "version":
     printLine(PureClipboardVersion.string)
 default:
     let parts = command.split(separator: "-", maxSplits: 1).map(String.init)
     if parts.count == 2, ["install", "uninstall", "status"].contains(parts[0]) {
         if parts[1] == "terminal" { runTerminalManagement(action: parts[0], rest) }
+        if parts[1] == "termux" { runTermuxManagement(action: parts[0], rest) }
         if let target = HookTarget(rawValue: parts[1]) { runManagement(action: parts[0], target: target, rest) }
     }
     printLine("""
@@ -237,6 +355,11 @@ default:
     Použití:
       claude-stop | codex-stop          hook pro událost Stop (čte JSON ze stdin)
       terminal-copy [--exit N]          zkopíruje výstup příkazu ze stdin (volá funkce pclip)
+      termux-receive [--from s25]       text ze stdin (z telefonu) do přijaté pošty
+      termux-fetch [--for s25]          vydá jednou text odeslaný z Macu (stdout)
+      termux-send [--to s25]            text ze stdin zařadí k odeslání do telefonu
+      termux-script [--host H]          vypíše skript pcr pro Termux
+      status-/install-/uninstall-termux kanál S25 ↔ Mac
       status-<claude|codex|terminal>    stav integrace
       install-<claude|codex|terminal>   bez --apply pouze ukáže plán
       uninstall-<claude|codex|terminal> bez --apply pouze ukáže plán

@@ -1,7 +1,7 @@
 # Pure Clipboard
 
 Nativní macOS aplikace PureStudio se dvěma obrazovkami: **Pure Clipboard** pro kopírování textu na váš pokyn a **Pure Remote** pro živý přehled komunikace Tailscale.
-Aktuální stav: Milník 3 (příprava distribuce, DMG zatím nevytvořeno) nad funkcemi Milníku 2E (macOS). Aplikace pro Windows 11 a Android přijdou až po ověření Mac verze. Viz [PLAN.md](PLAN.md).
+Aktuální stav: Milník 4 (Termux S25 ↔ Mac) nad přípravou distribuce (Milník 3, DMG zatím nevytvořeno) a funkcemi Milníku 2E (macOS). Aplikace pro Windows 11 a Android přijdou až po ověření Mac verze. Viz [PLAN.md](PLAN.md).
 
 ```bash
 scripts/build-app.sh                         # sestaví build/PureClipboard.app
@@ -82,3 +82,15 @@ scripts/build-app.sh                 # build/PureClipboard.app (ad-hoc podpis, A
 scripts/make-dmg.sh                  # jen plán; vytvoření až s --create
 scripts/notarize.sh <dmg>            # jen plán; odeslání až s --submit (vyžaduje Developer ID)
 ```
+
+## Termux: přenos textu mezi S25 a Macem
+
+Termux na S25 slouží jen ke komunikaci s Macem. Přenos běží **jen na výslovný příkaz** v Termuxu, přes váš stávající SSH klíč a Tailscale; Pure Clipboard nic neposlouchá a **nemění SSH**.
+
+1. V aplikaci zapněte **Termux** a v kartě „Termux – S25 ↔ Mac“ klikněte na **Připravit kanál** (plán a potvrzení).
+2. V Termuxu na S25 (jednou) nainstalujte skript příkazem z karty (tlačítko **Zkopírovat příkaz**). Potřebujete balíčky `openssh` a `termux-api` a aplikaci Termux:API.
+3. Pak v Termuxu: `pcr tomac` (schránka telefonu → přijatá pošta v aplikaci, odkud ji tlačítkem **Kopírovat** vložíte do schránky Macu), `pcr frommac` (text odeslaný tlačítkem **Odeslat schránku Macu do S25** → schránka telefonu), `pcr doctor`.
+
+Přijatý text se nikdy sám nezapíše do schránky Macu; položky v poště se po hodině smažou. Citlivé údaje se v obou směrech nepřenášejí. Terminálově: `pureclipboard-hook install-termux --apply`, `status-termux`, `uninstall-termux --apply`; `termux-send` zařadí text ze stdin k odeslání.
+
+Na skutečném telefonu zatím nezkoušeno (ověřeno simulací spojení); první kontrola: `pcr doctor`.

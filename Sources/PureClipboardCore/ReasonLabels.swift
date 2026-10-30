@@ -16,6 +16,9 @@ public enum HookReasonLabel {
         case "recent-copy-by-other-session": "jiná relace právě kopírovala (ochrana před přepsáním)"
         case "lock-unavailable": "schránku právě používá jiný hook"
         case "no-output": "příkaz nevypsal žádný výstup"
+        case "invalid-device": "neplatný název zařízení"
+        case "nothing-to-fetch": "není co stáhnout"
+        case "mailbox-write-failed": "poštu se nepodařilo uložit"
         default: reason
         }
     }

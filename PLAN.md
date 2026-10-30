@@ -80,7 +80,7 @@ Omezení: kopíruje se jen výslovně obalený příkaz (žádné automatické s
 - Pure Clipboard na Macu používá pro vybraný text systémové `⌘C` a pro celou odpověď tlačítko Kopírovat v ChatGPT, Claude či Gemini; tento způsob uživatel potvrdil jako požadovaný. Automatické hooky zůstávají volitelné.
 
 - Bezpečnostní model monitoru: aplikace spouští pouze `tailscale status --json` s pevnými argumenty bez shellu, jen z pevných cest (`/usr/local/bin/tailscale`, `/opt/homebrew/bin/tailscale`), chybový výstup zahazuje, proces po 5 s ukončí hlídací časovač a běží mimo hlavní vlákno. Výstup se čte do pevné struktury (neznámá pole se ignorují, záporná počítadla se ořežou na 0, neplatný JSON = „nečitelný stav“). Nic se nezapisuje na disk a zařízení ani provoz se neposílají jinam. Monitor běží jen při zapnutém přepínači a otevřené obrazovce Pure Remote; tím se zmírňuje dřívější záruka „aplikace sama nespouští žádné procesy“ (platí pro vše kromě tohoto čtení stavu).
-- Pojmenování a konfigurace: uložená hodnota `integrations.pureRemote.mode` zůstává kvůli kompatibilitě se stávajícími soubory `"actionResults"`, v aplikaci se zobrazuje jako „Živý přehled“. Přepínač Pure Remote je na obrazovce Pure Remote (ne v seznamu integrací kopírování); Termux je zatím jen uložený přepínač bez funkce.
+- Pojmenování a konfigurace: uložená hodnota `integrations.pureRemote.mode` zůstává kvůli kompatibilitě se stávajícími soubory `"actionResults"`, v aplikaci se zobrazuje jako „Živý přehled“. Přepínač Pure Remote je na obrazovce Pure Remote (ne v seznamu integrací kopírování); Termux: viz Milník 4.
 - Stav ověření: parsování, výpočet rychlosti a okrajové případy (chybějící pole, nečitelný JSON, záporná a obrovská počítadla, nulový nebo záporný časový rozdíl, třídění zařízení) pokrývají jednotkové testy; `tailscale` jako proces a SwiftUI karta jednotkovými testy pokryté nejsou (ověřeno ručně na reálném spojení Mac ↔ S25).
 
 Následující pořadí: dokončit a ověřit oba moduly na Macu; potom samostatné aplikace pro Windows 11 a Android; poté přenos textu na jedno vybrané zařízení a přehled komunikace i mezi ostatními zařízeními.
@@ -96,6 +96,27 @@ Rozsah: splnit připravitelné části závazných požadavků níže. **Žádn�
 - Testy `ReleaseMetadataTests` hlídají identitu, verzi, ikonu, `.gitignore`, platnost skriptů, odmítnutí notarizace ad-hoc souboru, to, že `make-dmg.sh` bez `--create` nic nevytvoří, pokrytí povinných témat v dokumentech a že texty nepřehánějí.
 - Intel: univerzální build se sestaví a x86_64 část pomocného programu běží pod Rosettou; **na skutečném Intelu neověřeno**, Xcode hlásí x86_64 jako zastaralé. Podporu neslibovat.
 - Vyzkoušeno jen na macOS 27 (deklarované minimum 14.0 neověřeno).
+
+## Milník 4 — Termux: komunikace S25 ↔ Mac ✅ (Mac strana a skript ověřeny simulací; reálný telefon čeká na první použití)
+
+Zadání uživatele: Termux slouží **jen** ke komunikaci S25 s ostatními zařízeními. Rozhodnuto: obousměrně; spouštěno **výslovnými příkazy v Termuxu**; přístup přes **stávající SSH klíč, žádná změna SSH ani `authorized_keys`**; přijatý text jde do **přijaté pošty** v aplikaci (do schránky Macu až tlačítkem Kopírovat).
+
+Zjištěno (jen čtení): Mac má zapnuté Vzdálené přihlášení a jeden klíč v `authorized_keys`; S25 nemá naslouchající SSH (porty 22/2222/8022 zavřené); na S25 je v Termuxu nainstalovaný balíček `termux-api`. Spojení proto vždy zahajuje telefon (Termux → SSH přes Tailscale → Mac).
+
+Implementace:
+- Pomocný program na Macu: `termux-receive` (telefon → Mac: text ze stdin do **inboxu**), `termux-fetch` (Mac → telefon: vydá **jednou** nejnovější položku **outboxu** a smaže ji), `termux-send` (text do outboxu), `termux-script [--host H]` (vypíše skript `pcr`), `install-/uninstall-/status-termux [--apply]`. Návratové kódy: 0 v pořádku, 3 není co stáhnout, 4 integrace vypnutá nebo neplatná konfigurace, 5 text odmítnut (citlivý, prázdný, příliš velký, neplatné zařízení).
+- Brány: přepínač **Termux** (Auto Copy se výslovných příkazů netýká) a ochrana citlivých údajů v **obou** směrech; při stažení se text skenuje znovu (ochranu mohl uživatel mezitím zapnout) a odmítnutá položka se smaže. Při neplatné konfiguraci nic neuloží.
+- Pošta: `~/Library/Application Support/PureClipboard/termux/{inbox,outbox}` (složky 0700, položky 0600), zámek `flock`, položky **vyprší po 1 hodině**, nejvýš 20 v každé schránce. Přijatý text **nikdy sám nemění schránku Macu**; tlačítko Kopírovat ji zapíše (a „zabere“ jako `pclip`). Odesílání z aplikace přečte schránku Macu **jednou, na stisk tlačítka**.
+- Vstup od telefonu je nedůvěryhodný: text se čistí (řídicí znaky, CR), název zařízení smí být jen `[a-z0-9-]{1,32}`, položky se identifikují UUID (id s `..` se ignorují), vstup ≤ 1 MiB a ≤ 200 000 znaků.
+- Skript `pcr` pro Termux (POSIX sh): `pcr tomac`, `pcr frommac`, `pcr doctor`, `pcr setup HOST [UŽIVATEL]`. Nikdy nepřepíše schránku telefonu prázdným výstupem (při kódu ≠ 0 ji nechá být), prázdnou schránku telefonu neposílá, SSH běží s `BatchMode` a `ConnectTimeout`. Instalace do Termuxu: jednorázový příkaz, který stáhne skript z Macu přes SSH (aplikace ho ukáže a umí zkopírovat).
+- GUI: karta Termux (stav, plán, příprava/odebrání kanálu, přijatá a odesílaná pošta s tlačítky Kopírovat/Smazat/Odeslat schránku Macu, příkaz pro Termux, test bez zápisu, zkušební položka) + řádek v seznamu integrací.
+- „Instalace“ kanálu = jen kopie pomocného programu a soukromé složky. **Žádné zásahy do SSH, Tailscale ani cizích souborů**; testy ověřují, že `~/.ssh/authorized_keys` zůstal beze změny.
+
+Omezení a neověřeno:
+- Na skutečném S25 to **nebylo spuštěno** (z Macu k telefonu se nepřipojuji; SSH klíč telefonu nemám). Ověřeno: celý Mac strana se skutečným pomocným programem a cestou s mezerou + skript `pcr` spuštěný s nahrazeným `ssh` a `termux-clipboard-*`. První skutečný běh provede uživatel: `pcr doctor`.
+- Vyžaduje v Termuxu `openssh`, `termux-api` a aplikaci Termux:API, v Tailscale dosažitelný Mac a SSH klíč telefonu v `authorized_keys` (už existuje, jeden klíč ed25519; nezkoumáno, zda je to klíč telefonu).
+- Kdo má ten SSH klíč, má na Macu už beze mě plný přístup; kanál tedy nezvyšuje práva, jen nabízí pohodlný postup.
+- Další zařízení (Android TV, budoucí Windows) zatím nejsou řešena; přenos jde jen mezi Macem a telefonem. Historie schránky zůstává „připravuje se“.
 
 ## Závazné požadavky na veřejnou distribuci
 

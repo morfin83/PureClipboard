@@ -13,6 +13,7 @@ HELPER="${1:-$ROOT/build/PureClipboard.app/Contents/MacOS/pureclipboard-hook}"
 
 T="$(mktemp -d)"
 ZSHRC_HASH="$(shasum -a 256 < ~/.zshrc)"
+AUTH_HASH="$(shasum -a 256 < ~/.ssh/authorized_keys 2>/dev/null)"
 pbpaste > "$T/clipboard.orig"
 trap 'pbcopy < "$T/clipboard.orig"; rm -rf "$T"' EXIT
 
@@ -28,17 +29,17 @@ pass=0; fail=0
 check() { # name, condition-result
   if [[ "$2" == "ok" ]]; then pass=$((pass+1)); echo "  PASS  $1"; else fail=$((fail+1)); echo "  FAIL  $1"; fi
 }
-write_config() { # autoCopy claude protect [codex] [terminal]
-  python3 -I - "$T/config.json" "$1" "$2" "$3" "${4:-0}" "${5:-0}" <<'EOF'
+write_config() { # autoCopy claude protect [codex] [terminal] [termux]   (file: $CFG, default $T/config.json)
+  python3 -I - "${CFG:-$T/config.json}" "$1" "$2" "$3" "${4:-0}" "${5:-0}" "${6:-0}" <<'EOF'
 import json, sys
-path, auto, claude, protect, codex, terminal = sys.argv[1], sys.argv[2] == "1", sys.argv[3] == "1", sys.argv[4] == "1", sys.argv[5] == "1", sys.argv[6] == "1"
+path, auto, claude, protect, codex, terminal, termux = sys.argv[1], sys.argv[2] == "1", sys.argv[3] == "1", sys.argv[4] == "1", sys.argv[5] == "1", sys.argv[6] == "1", sys.argv[7] == "1"
 modes = {"terminal": "diagnostics", "claudeCode": "finalResponse", "codex": "finalResponse", "pureRemote": "actionResults", "termux": "localClipboard"}
 cfg = {"schemaVersion": 1, "futureKey": {"keep": True},
        "global": {"autoCopy": auto, "historyLimit": 20, "protectSensitiveData": protect},
-       "integrations": {k: {"enabled": ((k == "claudeCode" and claude) or (k == "codex" and codex) or (k == "terminal" and terminal)), "mode": m} for k, m in modes.items()}}
+       "integrations": {k: {"enabled": ((k == "claudeCode" and claude) or (k == "codex" and codex) or (k == "terminal" and terminal) or (k == "termux" and termux)), "mode": m} for k, m in modes.items()}}
 open(path, "w").write(json.dumps(cfg, indent=2))
 EOF
-  chmod 600 "$T/config.json"
+  chmod 600 "${CFG:-$T/config.json}"
 }
 payload() { # event message-or-empty [session]
   python3 -I -c '
@@ -240,6 +241,92 @@ check "pclip without a command exits 2" "$([[ $code -eq 2 ]] && echo ok)"
 check "uninstall-terminal restores .zshrc byte for byte" "$(cmp -s "$Z" "$T/zshrc.orig" && echo ok)"
 check "snippet and helper removed" "$([[ ! -e "$PC" && ! -e "$T/bin/pureclipboard-hook" ]] && echo ok)"
 check "real ~/.zshrc untouched by this run" "$([[ "$(shasum -a 256 < ~/.zshrc)" == "$ZSHRC_HASH" ]] && echo ok)"
+
+echo "== 13. Termux: S25 <-> Mac channel (fake ssh + fake termux-api, real helper, path with spaces)"
+SUP="$T/Application Support/PureClipboard"; mkdir -p "$SUP"
+OLD_CFG_ENV="$PURECLIPBOARD_CONFIG_PATH"; export PURECLIPBOARD_CONFIG_PATH="$SUP/config.json"; CFG="$SUP/config.json"
+TH="$SUP/bin/pureclipboard-hook"
+SHIM="$T/shim"; mkdir -p "$SHIM"
+cat > "$SHIM/ssh" <<'SH'
+#!/bin/sh
+# Test double: the last argument is the remote command line; run it here, stdin/stdout passed through.
+for last; do :; done
+exec /bin/sh -c "$last"
+SH
+cat > "$SHIM/termux-clipboard-get" <<SH
+#!/bin/sh
+cat "$T/phone-clipboard"
+SH
+cat > "$SHIM/termux-clipboard-set" <<SH
+#!/bin/sh
+cat > "$T/phone-clipboard-written"
+SH
+chmod +x "$SHIM"/*
+write_config 0 0 1 0 0 1; rm -f "$SUP"/last-event*.json
+
+"$HELPER" install-termux >/dev/null
+check "dry run creates no mailbox" "$([[ ! -e "$SUP/termux" ]] && echo ok)"
+"$HELPER" install-termux --apply >/dev/null; code=$?
+check "install-termux --apply succeeds" "$([[ $code -eq 0 ]] && echo ok)"
+check "mailbox folders are private (0700)" "$([[ "$(stat -f %Lp "$SUP/termux/inbox")" == 700 && "$(stat -f %Lp "$SUP/termux/outbox")" == 700 ]] && echo ok)"
+check "helper copy is executable" "$([[ -x "$TH" ]] && echo ok)"
+status_out="$("$HELPER" status-termux)"
+check "status-termux reports the mailbox" "$(grep -q 'připravena' <<< "$status_out" && echo ok)"
+
+"$TH" termux-script --host mac-test --user pavel > "$T/pcr"
+check "termux-script prints valid sh" "$(sh -n "$T/pcr" && echo ok)"
+check "script knows the helper path with the space" "$(grep -q 'Application Support/PureClipboard/bin/pureclipboard-hook' "$T/pcr" && echo ok)"
+PCR() { env PATH="$SHIM:/usr/bin:/bin" HOME="$T/phone-home" XDG_CONFIG_HOME="$T/phone-home/cfg" sh "$T/pcr" "$@"; }
+mkdir -p "$T/phone-home"
+
+echo "-- phone -> Mac (inbox, clipboard of the Mac must stay untouched)"
+s="$(sentinel)"
+printf 'Neškodný text z telefonu\nřádek 2' > "$T/phone-clipboard"
+PCR tomac 2> "$T/pcr.err"; code=$?
+check "pcr tomac exits 0" "$([[ $code -eq 0 ]] && echo ok)"
+check "Mac clipboard unchanged by an incoming text" "$([[ "$(pbpaste)" == "$s" ]] && echo ok)"
+item="$(ls "$SUP/termux/inbox"/*.json 2>/dev/null | head -1)"
+check "item landed in the inbox, mode 0600" "$([[ -n "$item" && "$(stat -f %Lp "$item")" == 600 ]] && echo ok)"
+check "inbox item holds the text" "$(grep -q 'Neškodný text z telefonu' "$item" && echo ok)"
+EVENT_FILE="$SUP/last-event-termux.json"
+check "event says received, without content" "$([[ "$(event_field reason)" == received ]] && ! grep -q 'Neškodný' "$EVENT_FILE" && echo ok)"
+unset EVENT_FILE
+
+echo "-- sensitive text from the phone is refused"
+printf 'klíč: %s' "$fake" > "$T/phone-clipboard"
+PCR tomac 2> "$T/pcr.err"; code=$?
+check "refused with exit 5" "$([[ $code -eq 5 ]] && echo ok)"
+check "inbox still holds only the first item" "$([[ "$(ls "$SUP/termux/inbox" | wc -l | tr -d ' ')" == 1 ]] && echo ok)"
+check "no secret in the event record" "$(grep -q "$fake" "$SUP/last-event-termux.json" || echo ok)"
+
+echo "-- Mac -> phone (outbox, delivered exactly once)"
+printf 'Text pro telefon: žluťoučký kůň' | "$TH" termux-send 2>/dev/null
+rm -f "$T/phone-clipboard-written"
+PCR frommac 2>/dev/null; code=$?
+check "pcr frommac exits 0" "$([[ $code -eq 0 ]] && echo ok)"
+check "phone clipboard received the text byte for byte" "$([[ "$(cat "$T/phone-clipboard-written")" == 'Text pro telefon: žluťoučký kůň' ]] && echo ok)"
+rm -f "$T/phone-clipboard-written"
+PCR frommac 2>/dev/null; code=$?
+check "second fetch: exit 3 and phone clipboard untouched" "$([[ $code -eq 3 && ! -e "$T/phone-clipboard-written" ]] && echo ok)"
+
+echo "-- switches"
+write_config 0 0 1 0 0 0; rm -f "$SUP/last-event-termux.json"
+printf 'nesmí projít' > "$T/phone-clipboard"
+PCR tomac 2> "$T/pcr.err"; code=$?
+check "Termux switch off: exit 4 and a clear message" "$([[ $code -eq 4 ]] && grep -q 'vypnutý' "$T/pcr.err" && echo ok)"
+check "Termux switch off: nothing stored, no trace" "$([[ "$(ls "$SUP/termux/inbox" | wc -l | tr -d ' ')" == 1 && ! -e "$SUP/last-event-termux.json" ]] && echo ok)"
+write_config 0 0 1 0 0 1
+printf 'Auto Copy je vypnutý, přesto to projde do pošty' > "$T/phone-clipboard"
+PCR tomac 2>/dev/null; code=$?
+check "Auto Copy off does not matter for explicit commands" "$([[ $code -eq 0 && "$(ls "$SUP/termux/inbox" | wc -l | tr -d ' ')" == 2 ]] && echo ok)"
+check "pcr doctor reaches the helper" "$(PCR doctor 2>&1 | grep -q 'spojení s Macem: OK' && echo ok)"
+
+echo "-- removal"
+"$HELPER" uninstall-termux --apply >/dev/null
+check "uninstall deletes the mailbox and waiting texts" "$([[ ! -e "$SUP/termux" ]] && echo ok)"
+check "helper removed with the last integration" "$([[ ! -e "$TH" ]] && echo ok)"
+check "no real SSH config was read or changed" "$([[ "$(shasum -a 256 < ~/.ssh/authorized_keys 2>/dev/null)" == "$AUTH_HASH" ]] && echo ok)"
+export PURECLIPBOARD_CONFIG_PATH="$OLD_CFG_ENV"; unset CFG
 
 echo
 echo "Passed: $pass  Failed: $fail"

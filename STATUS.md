@@ -1,10 +1,11 @@
 # Pure Clipboard – stav projektu
 
-Snímek ze **30. 10. 2026** (aktualizováno po Milníku 3). Sestaveno z Gitu, testů a read-only kontroly Macu po tom, co část práce proběhla v GPT. Podrobnosti o jednotlivých milnících jsou v [PLAN.md](PLAN.md), návody v [README.md](README.md). Tento soubor záměrně nemění PLAN.md, protože ten se právě upravuje v rozpracovaném Milníku 2E.
+Snímek ze **30. 10. 2026** (aktualizováno po Milníku 4). Sestaveno z Gitu, testů a read-only kontroly Macu po tom, co část práce proběhla v GPT. Podrobnosti o jednotlivých milnících jsou v [PLAN.md](PLAN.md), návody v [README.md](README.md). Tento soubor záměrně nemění PLAN.md, protože ten se právě upravuje v rozpracovaném Milníku 2E.
 
 ## 1. Kde co leží (Git)
 
 ```
+(větev milestone-4-termux)  Milník 4  Termux: S25 ↔ Mac na výslovný příkaz (inbox/outbox)   v0.6.0
 1e569ec  Milník 3   příprava distribuce: ikona, skripty, dokumenty — bez DMG   v0.5.0   ← main, milestone-3-distribution
 38e29e4  Milník 2E  Pure Remote na Macu (přehled Tailscale)      v0.5.0   ← milestone-2e-pure-remote-mac
 ab6c9b3  Milník 2D  ruční kopírování a pclip bez Auto Copy        v0.4.0   ← milestone-2d-manual-copy
@@ -41,7 +42,7 @@ Starší ověření: 2A–2C viz reporty v PLAN.md (Claude Code ověřen v reál
 1. **Ruční kopírování je hlavní způsob.** Text se mezi ChatGPT, Claude, Gemini, Terminálem přenáší systémovým `⌘C` / tlačítkem Kopírovat / `⌘V`; Pure Clipboard jeho obsah nečte ani nesleduje. Automatické hooky Claude Code a Codexu jsou **volitelné** a řídí je Auto Copy.
 2. **`pclip` nezávisí na Auto Copy** (od 2D). Stačí zapnutá integrace Apple Terminal; zůstává sken citlivých údajů, limity a zámek.
 3. **Pure Remote NENÍ kopírování výsledků akcí.** Znamená přehled provozu Tailscale na Macu: stav zařízení, přímé/reléové spojení, rychlost odesílání a příjmu mezi Macem a každým zařízením (čte `tailscale status --json` každé 2 s, jen při zapnutém přepínači a otevřené obrazovce; bez historie, bez zásahu do Tailscale). Dřívější návrh promptu „Pure Remote = `actionResults` kopírování do schránky“ je **neplatný**.
-4. **Plán dál:** dokončit a ověřit oba moduly na Macu → samostatné aplikace pro Windows 11 a Android → přenos textu na jedno vybrané zařízení a přehled komunikace i mezi ostatními zařízeními. Termux v konfiguraci zatím jen přepínač bez funkce (jeho role se nejspíš spojí s Android aplikací; nerozhodnuto).
+4. **Plán dál:** dokončit a ověřit oba moduly na Macu → samostatné aplikace pro Windows 11 a Android → přenos textu na jedno vybrané zařízení a přehled komunikace i mezi ostatními zařízeními. **Termux** (rozhodnuto 30. 10.): slouží jen ke komunikaci S25 s ostatními zařízeními; Mac strana hotová v Milníku 4 (obousměrně, výslovné příkazy, stávající SSH klíč, přijatá pošta v aplikaci). Na skutečném telefonu neověřeno.
 5. **Historie schránky** je pořád jen nastavený limit (karta je v 2E označena „připravuje se“).
 
 ## 5. Nalezené nesrovnalosti a rizika
@@ -63,5 +64,5 @@ Starší ověření: 2A–2C viz reporty v PLAN.md (Claude Code ověřen v reál
 1. ~~Commitnout 2E~~ (hotovo).
 2. ~~Sloučit řetěz 2A → 2E do `main`~~ (hotovo lokálně; bez pushe a bez release). `STATUS.md` je i v `main`.
 3. ~~Ověřit `pclip`~~ (hotovo); případně ještě Codex Desktop.
-4. Rozhodnout osud Termuxu a historie schránky.
+4. ~~Rozhodnout osud Termuxu~~ (Milník 4); zbývá rozhodnout, co přesně má ukládat **historie schránky**.
 5. Teprve potom distribuce (DMG atd.) a aplikace pro Windows 11 / Android.

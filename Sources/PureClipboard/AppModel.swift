@@ -23,6 +23,7 @@ final class AppModel {
     let claude: HookController
     let codex: HookController
     let terminal: TerminalController
+    let termux: TermuxController
     let remote = RemoteController()
 
     private var document: ConfigDocument?
@@ -33,6 +34,7 @@ final class AppModel {
         claude = HookController(target: .claude, store: store)
         codex = HookController(target: .codex, store: store)
         terminal = TerminalController(store: store)
+        termux = TermuxController(store: store)
         reload()
     }
 
@@ -42,6 +44,7 @@ final class AppModel {
         claude.refresh()
         codex.refresh()
         terminal.refresh()
+        termux.refresh()
     }
 
     var configPath: String {
