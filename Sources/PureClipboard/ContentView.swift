@@ -124,14 +124,11 @@ private struct HeaderView: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: "doc.on.clipboard.fill")
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(.black.opacity(0.85))
-                .frame(width: 46, height: 46)
-                .background(
-                    LinearGradient(colors: [Theme.accent, Theme.accent.opacity(0.65)], startPoint: .topLeading, endPoint: .bottomTrailing),
-                    in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-                )
+            Image(nsImage: NSApplication.shared.applicationIconImage)
+                .resizable()
+                .interpolation(.high)
+                .frame(width: 58, height: 58)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Pure Clipboard")
                     .font(.system(size: 22, weight: .semibold, design: .default))
