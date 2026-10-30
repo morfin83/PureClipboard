@@ -4,6 +4,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(AppModel.self) private var model
+    @State private var section: StudioSection = .clipboard
 
     var body: some View {
         ZStack {
@@ -11,20 +12,27 @@ struct ContentView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     HeaderView()
-                    PreviewNotice()
+                    StudioNavigation(section: $section)
                     if let config = model.config {
-                        AutoCopyCard(config: config)
-                        IntegrationsCard(config: config)
-                        HStack(alignment: .top, spacing: 16) {
-                            HistoryCard(config: config)
-                            SensitiveDataCard(config: config)
+                        if section == .clipboard {
+                            PreviewNotice()
+                            AutoCopyCard(config: config)
+                            IntegrationsCard(config: config)
+                            HStack(alignment: .top, spacing: 16) {
+                                HistoryCard(config: config)
+                                SensitiveDataCard(config: config)
+                            }
+                            HookCard(target: .claude)
+                            HookCard(target: .codex)
+                            TerminalCard()
+                            ConfigStatusCard()
+                        } else {
+                            RemoteCard(enabled: config.integrations.pureRemote.enabled)
                         }
                     }
-                    HookCard(target: .claude)
-                    HookCard(target: .codex)
-                    TerminalCard()
-                    ConfigStatusCard()
-                    Text("Milník 2D · Aplikace sama nespouští žádné procesy ani služby")
+                    Text(section == .clipboard
+                         ? "Pure Clipboard · Kopírování řídíte vy"
+                         : "Pure Remote · Stav Tailscale se čte jen při zapnutém přepínači")
                         .font(.system(size: 11))
                         .foregroundStyle(Theme.tertiaryText)
                         .padding(.top, 4)
@@ -38,6 +46,40 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             model.refreshHooks()
         }
+    }
+}
+
+private enum StudioSection: String, CaseIterable {
+    case clipboard, remote
+
+    var title: String { self == .clipboard ? "Pure Clipboard" : "Pure Remote" }
+    var symbol: String { self == .clipboard ? "doc.on.clipboard" : "network" }
+}
+
+private struct StudioNavigation: View {
+    @Binding var section: StudioSection
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(StudioSection.allCases, id: \.self) { item in
+                Button {
+                    section = item
+                } label: {
+                    Label(item.title, systemImage: item.symbol)
+                        .font(.system(size: 13, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 11)
+                        .foregroundStyle(section == item ? Theme.primaryText : Theme.secondaryText)
+                        .background(section == item ? Theme.accent.opacity(0.14) : Color.clear,
+                                    in: RoundedRectangle(cornerRadius: 9))
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("studioSection.\(item.rawValue)")
+            }
+        }
+        .padding(4)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.cardBorder))
     }
 }
 
@@ -84,7 +126,7 @@ private struct PreviewNotice: View {
                 Text("Claude Code, Codex a Apple Terminal jsou připravené")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Theme.primaryText)
-                Text("Claude Code a Codex kopírují automaticky jen při zapnutém Auto Copy. Apple Terminal kopíruje po instalaci příkazu pclip a jeho výslovném spuštění. Přepínače Pure Remote a Termux zatím jen mění uloženou konfiguraci a nic nedělají.")
+                Text("Označený text zkopírujete pomocí ⌘C, celou odpověď tlačítkem Kopírovat v AI aplikaci. Claude Code a Codex kopírují samy jen při zapnutém Auto Copy; Apple Terminal používá výslovný příkaz pclip.")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
@@ -136,7 +178,7 @@ struct IntegrationsCard: View {
     var body: some View {
         Card(title: "Integrace", symbol: "puzzlepiece.extension") {
             VStack(spacing: 0) {
-                ForEach(Array(IntegrationID.allCases.enumerated()), id: \.element) { index, id in
+                ForEach(Array([IntegrationID.terminal, .claudeCode, .codex].enumerated()), id: \.element) { index, id in
                     if index > 0 { Divider().overlay(Theme.cardBorder) }
                     IntegrationRow(id: id, settings: config.integrations[id], masterOn: config.global.autoCopy, trailing: trailing(for: id)) { value in
                         model.update { $0.integrations[id].enabled = value }
@@ -204,7 +246,6 @@ private struct IntegrationRow: View {
     private var statusText: String {
         if !settings.enabled { return "\(id.summary) · vypnuto" }
         if id == .terminal { return "\(id.summary) · na příkaz pclip" }
-        if id == .pureRemote || id == .termux { return "\(id.summary) · zatím neaktivní" }
         return masterOn ? "\(id.summary) · povoleno v konfiguraci" : "\(id.summary) · čeká na Auto Copy"
     }
 }
@@ -214,7 +255,7 @@ private struct HistoryCard: View {
     let config: PureClipboardConfig
 
     var body: some View {
-        Card(title: "Historie schránky", symbol: "clock.arrow.circlepath") {
+        Card(title: "Historie schránky · připravuje se", symbol: "clock.arrow.circlepath") {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text("\(config.global.historyLimit)")
@@ -237,7 +278,7 @@ private struct HistoryCard: View {
                             .buttonStyle(PresetButtonStyle(selected: config.global.historyLimit == preset))
                     }
                 }
-                Text("Maximální počet uchovaných záznamů (\(PureClipboardConfig.historyLimitRange.lowerBound)–\(PureClipboardConfig.historyLimitRange.upperBound)).")
+                Text("Nastavený limit pro budoucí historii (\(PureClipboardConfig.historyLimitRange.lowerBound)–\(PureClipboardConfig.historyLimitRange.upperBound)). Obsah schránky se zatím neukládá.")
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.tertiaryText)
                     .fixedSize(horizontal: false, vertical: true)
@@ -276,7 +317,7 @@ private struct SensitiveDataCard: View {
                         Text(protected ? "Aktivní" : "Vypnuto")
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(Theme.primaryText)
-                        Text(protected ? "Hesla a tokeny se nebudou ukládat" : "Doporučujeme ochranu zapnout")
+                        Text(protected ? "Hooky a pclip nezkopírují rozpoznaná hesla a tokeny" : "Doporučujeme ochranu zapnout")
                             .font(.system(size: 11.5))
                             .foregroundStyle(Theme.secondaryText)
                     }
@@ -290,7 +331,7 @@ private struct SensitiveDataCard: View {
                     .labelsHidden()
                     .toggleStyle(.switch)
                 }
-                Text("Detekce citlivého obsahu bude aktivní spolu s integracemi v dalších milnících.")
+                Text("Ochrana platí pro hooky a pclip. Ruční kopírování v jiných aplikacích řídí macOS.")
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.tertiaryText)
                     .fixedSize(horizontal: false, vertical: true)
@@ -302,7 +343,7 @@ private struct SensitiveDataCard: View {
             }
             Button("Zrušit", role: .cancel) {}
         } message: {
-            Text("Bez ochrany by se do historie mohla dostat hesla nebo tokeny.")
+            Text("Bez ochrany mohou hooky nebo pclip zkopírovat hesla a tokeny.")
         }
     }
 }

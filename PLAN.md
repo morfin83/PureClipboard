@@ -70,7 +70,20 @@ Omezení: kopíruje se jen výslovně obalený příkaz (žádné automatické s
 - GUI vysvětluje rozdíl mezi automatickým a ručním kopírováním. Testy ověřují, že vypnuté Auto Copy stále blokuje hooky, ale dovolí výslovný `pclip`.
 - Pro skutečné použití `pclip` je nutná jeho instalace z aplikace nebo pomocí `install-terminal --apply` po zobrazení plánu; instalace mění pouze vlastní označený blok v `~/.zshrc` a vlastní skript Pure Clipboard, se zálohou.
 
-Další milníky: Pure Remote, Termux, historie schránky.
+## Milník 2E — Pure Remote na Macu ✅
+
+- Samostatná obrazovka Pure Remote. Přepínač spouští čtení místního `tailscale status --json` každé dvě sekundy; po vypnutí nebo opuštění obrazovky se monitor zastaví. Žádná trvalá služba se neinstaluje.
+- Stav zařízení v tailnetu, aktivní přímé nebo reléové spojení, rychlost odesílání a příjmu mezi **tímto Macem a každým zařízením**. Rychlost je změna kumulativních počítadel `TxBytes`/`RxBytes` za časový interval; při prvním vzorku, odpojení, zmizení zařízení nebo resetu počítadel se ukazuje 0 B/s.
+- Přehled je pouze v paměti aplikace. Nečte obsah komunikace, neukládá historii provozu ani nemění Tailscale nastavení.
+- Ověřeno na skutečném spojení Mac ↔ S25: při přenosu neškodných testovacích dat se příjem na Macu zobrazil u S25, přibližně 270 KB/s. Jednotkové testy ověřují parsování, výpočet rychlosti a nulování při odpojení.
+- Omezení: Macův místní stav neobsahuje živou rychlost mezi dvěma jinými zařízeními. Ovládání připojení a vzdálené probouzení nejsou implementovány. Pro první Mac verzi je schválený rozsah stav všech zařízení a živý přenos Mac ↔ každé zařízení; mezizařízení přibudou s aplikacemi pro Windows a Android.
+- Pure Clipboard na Macu používá pro vybraný text systémové `⌘C` a pro celou odpověď tlačítko Kopírovat v ChatGPT, Claude či Gemini; tento způsob uživatel potvrdil jako požadovaný. Automatické hooky zůstávají volitelné.
+
+- Bezpečnostní model monitoru: aplikace spouští pouze `tailscale status --json` s pevnými argumenty bez shellu, jen z pevných cest (`/usr/local/bin/tailscale`, `/opt/homebrew/bin/tailscale`), chybový výstup zahazuje, proces po 5 s ukončí hlídací časovač a běží mimo hlavní vlákno. Výstup se čte do pevné struktury (neznámá pole se ignorují, záporná počítadla se ořežou na 0, neplatný JSON = „nečitelný stav“). Nic se nezapisuje na disk a zařízení ani provoz se neposílají jinam. Monitor běží jen při zapnutém přepínači a otevřené obrazovce Pure Remote; tím se zmírňuje dřívější záruka „aplikace sama nespouští žádné procesy“ (platí pro vše kromě tohoto čtení stavu).
+- Pojmenování a konfigurace: uložená hodnota `integrations.pureRemote.mode` zůstává kvůli kompatibilitě se stávajícími soubory `"actionResults"`, v aplikaci se zobrazuje jako „Živý přehled“. Přepínač Pure Remote je na obrazovce Pure Remote (ne v seznamu integrací kopírování); Termux je zatím jen uložený přepínač bez funkce.
+- Stav ověření: parsování, výpočet rychlosti a okrajové případy (chybějící pole, nečitelný JSON, záporná a obrovská počítadla, nulový nebo záporný časový rozdíl, třídění zařízení) pokrývají jednotkové testy; `tailscale` jako proces a SwiftUI karta jednotkovými testy pokryté nejsou (ověřeno ručně na reálném spojení Mac ↔ S25).
+
+Následující pořadí: dokončit a ověřit oba moduly na Macu; potom samostatné aplikace pro Windows 11 a Android; poté přenos textu na jedno vybrané zařízení a přehled komunikace i mezi ostatními zařízeními.
 
 ## Závazné požadavky na veřejnou distribuci
 

@@ -23,6 +23,7 @@ final class AppModel {
     let claude: HookController
     let codex: HookController
     let terminal: TerminalController
+    let remote = RemoteController()
 
     private var document: ConfigDocument?
     private var fingerprint: String?

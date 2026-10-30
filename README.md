@@ -1,7 +1,7 @@
 # Pure Clipboard
 
-Nativní macOS aplikace PureStudio pro správu automatického kopírování do schránky.
-Aktuální stav: Milník 2D (ruční přenos mezi aplikacemi, volitelné automatické hooky Claude Code a Codex, Apple Terminal přes příkaz `pclip`; Pure Remote a Termux zatím neaktivní). Viz [PLAN.md](PLAN.md).
+Nativní macOS aplikace PureStudio se dvěma obrazovkami: **Pure Clipboard** pro kopírování textu na váš pokyn a **Pure Remote** pro živý přehled komunikace Tailscale.
+Aktuální stav: Milník 2E (macOS). Aplikace pro Windows 11 a Android přijdou až po ověření Mac verze. Viz [PLAN.md](PLAN.md).
 
 ```bash
 scripts/build-app.sh                         # sestaví build/PureClipboard.app
@@ -19,6 +19,14 @@ Pure Clipboard používá společnou schránku macOS. Kopírování proběhne a�
 3. Přejděte do cílové aplikace (`⌘Tab`) a vložte pomocí `⌘V`.
 
 Na Macu je klávesou pro kopírování `⌘`, nikoli `Ctrl`. V terminálu `Ctrl+C` přerušuje příkaz. Ruční kopírování přímo v jiné aplikaci zpracovává macOS; Pure Clipboard jeho obsah nečte ani nesleduje. Jestliže chcete, aby nové odpovědi Claude Code nebo Codexu samy nahradily schránku, zapněte **Auto Copy** a příslušnou integraci. Pro režim kopírování pouze na váš pokyn nechte **Auto Copy** vypnuté.
+
+## Pure Remote na Macu
+
+Přejděte v horní části aplikace na obrazovku **Pure Remote** a zapněte její přepínač. Aplikace pak každé dvě sekundy čte `tailscale status --json` z místního Macu. Zobrazuje dostupnost zařízení v tailnetu, typ aktuálního spojení a momentální rychlost odesílání a příjmu **mezi tímto Macem a každým zařízením**. Rychlost se počítá ze změny počítadel `TxBytes` a `RxBytes`; první vzorek proto ukazuje 0 B/s. Funkce vyžaduje nainstalovaný a přihlášený Tailscale s dostupným CLI. Po vypnutí přepínače nebo opuštění obrazovky monitorování skončí. Aplikace neukládá historii provozu.
+
+Mac nemůže ze svého místního stavu změřit živý přenos mezi dvěma jinými zařízeními. Ten přijde až s aplikacemi na dalších platformách. Ovládání připojení a vzdálené probouzení zatím nejsou součástí této obrazovky.
+
+Nastavení „Historie schránky“ je zatím jen příprava; obsah schránky se neukládá.
 
 ## Zapnutí integrace Claude Code
 
