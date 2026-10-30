@@ -12,7 +12,8 @@ Plnění závazných požadavků najdete v [PLAN.md](../PLAN.md).
 | `scripts/make-dmg.sh` | DMG s pozadím PURE, odkazem na Applications, návodem a SHA-256 (jen s `--create`); ad-hoc app → název `…-adhoc-TEST`, popisky „testovací“; Developer ID app → běžný název bez textu o nenotarizaci |
 | `scripts/make-dmg-background.swift` | pozadí okna DMG |
 | `scripts/notarize.sh` | notarizace DMG podepsaného Developer ID (jen s `--submit`) |
-| `scripts/make-icon.swift` | vygeneruje ikonu (`iconutil -c icns` ji převede na `Resources/AppIcon.icns`) |
+| `scripts/make-icon-from-artwork.swift` | z dodané grafiky `Resources/Artwork/AppIcon-source.png` vyrobí `.iconset` (`iconutil -c icns` ho převede na `Resources/AppIcon.icns`) |
+| `scripts/make-icon.swift` | původní procedurální ikona, záloha |
 | `Resources/Info.plist` | identita, verze, kategorie, ikona |
 | `docs/INSTALACE.md` | návod pro uživatele |
 | `docs/WEB-PURESTUDIO.md` | texty pro webovou stránku |

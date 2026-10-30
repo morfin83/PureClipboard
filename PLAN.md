@@ -89,7 +89,7 @@ Následující pořadí: dokončit a ověřit oba moduly na Macu; potom samostat
 
 Rozsah: splnit připravitelné části závazných požadavků níže. **Žádné DMG ani release nevzniklo**; skripty bez `--create` / `--submit` jen vypíšou plán. Podrobnosti pro vydavatele: [docs/DISTRIBUCE.md](docs/DISTRIBUCE.md).
 
-- Ikona ve stylu PureStudio: `scripts/make-icon.swift` → `Resources/AppIcon.icns` (+ `docs/assets/AppIcon-1024.png`); `build-app.sh` ji vkládá do balíčku. Plist doplněn o ikonu, kategorii (produktivita) a copyright.
+- Ikona: od 30. 10. 2026 dodaná grafika uživatele (`Resources/Artwork/AppIcon-source.png`), `scripts/make-icon-from-artwork.swift` ji ořízne na desku a vloží do mřížky macOS → `Resources/AppIcon.icns` (původní procedurální `scripts/make-icon.swift` zůstává jako záloha) (+ `docs/assets/AppIcon-1024.png`); `build-app.sh` ji vkládá do balíčku. Plist doplněn o ikonu, kategorii (produktivita) a copyright.
 - `build-app.sh`: `CODESIGN_IDENTITY` (Developer ID, hardened runtime, časové razítko), `ARCHS` (univerzální build), `OUT_DIR`; kontrola shody verze plistu a pomocného programu.
 - `make-dmg.sh` (odkaz na Applications, `PŘEČTĚTE.txt`, SHA-256 soubor) a `notarize.sh` (odmítne ad-hoc, `--submit` až s profilem notarytool). **Neověřeno proti službě Apple** (chybí certifikát).
 - Dokumentace: `docs/INSTALACE.md` (pro začátečníky, Gatekeeper, SHA-256, odinstalace), `docs/WEB-PURESTUDIO.md` (kompletní české texty + seznam „co nepsat“), `docs/DISTRIBUCE.md`.
