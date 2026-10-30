@@ -1,7 +1,7 @@
 # Pure Clipboard
 
 Nativní macOS aplikace PureStudio se dvěma obrazovkami: **Pure Clipboard** pro kopírování textu na váš pokyn a **Pure Remote** pro živý přehled komunikace Tailscale.
-Aktuální stav: Milník 2E (macOS). Aplikace pro Windows 11 a Android přijdou až po ověření Mac verze. Viz [PLAN.md](PLAN.md).
+Aktuální stav: Milník 3 (příprava distribuce, DMG zatím nevytvořeno) nad funkcemi Milníku 2E (macOS). Aplikace pro Windows 11 a Android přijdou až po ověření Mac verze. Viz [PLAN.md](PLAN.md).
 
 ```bash
 scripts/build-app.sh                         # sestaví build/PureClipboard.app
@@ -72,3 +72,13 @@ pclip swift build
 3. Otevřete nové okno Terminálu. Příkaz `pclip` vrací stejný kód jako obalený příkaz; výstup se zkopíruje jen bez hesel a tokenů (při chybě s řádkem `[exit N]`).
 
 Terminálově: `pureclipboard-hook install-terminal --apply` (bez `--apply` jen plán), `status-terminal`, `uninstall-terminal --apply`. Váš stávající `cliprun` zůstává beze změny.
+
+## Distribuce (příprava)
+
+Návod pro uživatele: [docs/INSTALACE.md](docs/INSTALACE.md). Postup pro vydavatele (podpis, DMG, SHA-256, notarizace, Intel): [docs/DISTRIBUCE.md](docs/DISTRIBUCE.md). Texty pro web: [docs/WEB-PURESTUDIO.md](docs/WEB-PURESTUDIO.md).
+
+```bash
+scripts/build-app.sh                 # build/PureClipboard.app (ad-hoc podpis, Apple Silicon)
+scripts/make-dmg.sh                  # jen plán; vytvoření až s --create
+scripts/notarize.sh <dmg>            # jen plán; odeslání až s --submit (vyžaduje Developer ID)
+```

@@ -85,16 +85,28 @@ Omezení: kopíruje se jen výslovně obalený příkaz (žádné automatické s
 
 Následující pořadí: dokončit a ověřit oba moduly na Macu; potom samostatné aplikace pro Windows 11 a Android; poté přenos textu na jedno vybrané zařízení a přehled komunikace i mezi ostatními zařízeními.
 
+## Milník 3 — příprava veřejné distribuce ✅ (bez vytvoření DMG a bez vydání)
+
+Rozsah: splnit připravitelné části závazných požadavků níže. **Žádné DMG ani release nevzniklo**; skripty bez `--create` / `--submit` jen vypíšou plán. Podrobnosti pro vydavatele: [docs/DISTRIBUCE.md](docs/DISTRIBUCE.md).
+
+- Ikona ve stylu PureStudio: `scripts/make-icon.swift` → `Resources/AppIcon.icns` (+ `docs/assets/AppIcon-1024.png`); `build-app.sh` ji vkládá do balíčku. Plist doplněn o ikonu, kategorii (produktivita) a copyright.
+- `build-app.sh`: `CODESIGN_IDENTITY` (Developer ID, hardened runtime, časové razítko), `ARCHS` (univerzální build), `OUT_DIR`; kontrola shody verze plistu a pomocného programu.
+- `make-dmg.sh` (odkaz na Applications, `PŘEČTĚTE.txt`, SHA-256 soubor) a `notarize.sh` (odmítne ad-hoc, `--submit` až s profilem notarytool). **Neověřeno proti službě Apple** (chybí certifikát).
+- Dokumentace: `docs/INSTALACE.md` (pro začátečníky, Gatekeeper, SHA-256, odinstalace), `docs/WEB-PURESTUDIO.md` (kompletní české texty + seznam „co nepsat“), `docs/DISTRIBUCE.md`.
+- Testy `ReleaseMetadataTests` hlídají identitu, verzi, ikonu, `.gitignore`, platnost skriptů, odmítnutí notarizace ad-hoc souboru, to, že `make-dmg.sh` bez `--create` nic nevytvoří, pokrytí povinných témat v dokumentech a že texty nepřehánějí.
+- Intel: univerzální build se sestaví a x86_64 část pomocného programu běží pod Rosettou; **na skutečném Intelu neověřeno**, Xcode hlásí x86_64 jako zastaralé. Podporu neslibovat.
+- Vyzkoušeno jen na macOS 27 (deklarované minimum 14.0 neověřeno).
+
 ## Závazné požadavky na veřejnou distribuci
 
-Stav: **pouze zaznamenáno — release zatím nevytvářet ani nepublikovat.**
+Stav: **příprava hotová, release zatím nevytvářet ani nepublikovat.**
 
-1. **Instalační DMG** — finální DMG s rozvržením „přetáhněte aplikaci do Applications“ (odkaz na `/Applications`, pozadí v PureStudio stylu).
-2. **Vlastní ikona** — ikona aplikace ve vizuálním stylu PureStudio (tmavý podklad, tyrkysový akcent), všechny velikosti v `AppIcon.icns` / asset katalogu.
-3. **Identita a verzování** — stabilní bundle identifier `studio.pure.clipboard` (neměnit), sémantické verzování `CFBundleShortVersionString` + monotónně rostoucí `CFBundleVersion`; architektura připravená na budoucí mechanismus aktualizací (např. Sparkle s podepsaným appcastem).
-4. **Ad-hoc podpis** — distribuce bez placeného Apple Developer Programu podepsaná ad-hoc (`codesign --sign -`).
-5. **Budoucí Developer ID + notarizace** — build skripty připravit tak, aby šlo přepnout na podpis Developer ID (hardened runtime, entitlements) a notarizaci přes `notarytool` + `stapler`. **Ad-hoc podpis notarizaci nenahrazuje**: Gatekeeper takovou aplikaci při prvním spuštění zablokuje a uživatel ji musí ručně povolit.
-6. **Kontrolní součet** — ke každému DMG zveřejnit SHA-256 (`shasum -a 256`).
-7. **Instalační návod pro začátečníky** — krok za krokem (stažení, ověření SHA-256, otevření DMG, přetažení do Applications, první spuštění), včetně jasného upozornění na Gatekeeper u nenotarizované aplikace a postupu povolení přes Nastavení systému → Soukromí a zabezpečení → „Přesto otevřít“.
-8. **Texty pro web PureStudio** — kompletní české texty veřejné stránky aplikace (název, claim, popis, funkce, soukromí a bezpečnost, systémové požadavky, instalace, stav podpisu, FAQ, changelog).
-9. **Architektury** — primární distribuce pro Apple Silicon (arm64). Podporu Intel (x86_64 / universal binary) ověřit samostatně na Intel stroji před tím, než bude uvedena jako podporovaná.
+1. **Instalační DMG** — *skript připraven (`make-dmg.sh --create`), DMG nevytvořeno* (odkaz na `/Applications`; pozadí v PureStudio stylu nebylo děláno, jen odkaz a návod).
+2. **Vlastní ikona** — ✅ hotovo (`Resources/AppIcon.icns`).
+3. **Identita a verzování** — ✅ `studio.pure.clipboard`, semver + rostoucí `CFBundleVersion`, kontrola shody a testy. Mechanismus aktualizací zatím není (připravenost: stabilní ID, rostoucí build, „Aktualizovat“ u pomocného programu; doporučeno Sparkle po Developer ID, viz DISTRIBUCE.md).
+4. **Ad-hoc podpis** — ✅ výchozí build. Nenahrazuje notarizaci a dokumenty to uvádějí.
+5. **Budoucí Developer ID + notarizace** — ✅ skripty připraveny (`CODESIGN_IDENTITY`, `notarize.sh`), **neověřeno proti Apple**.
+6. **SHA-256** — ✅ `make-dmg.sh --create` vytvoří `.dmg.sha256`; postup ověření je v návodu.
+7. **Instalační návod pro začátečníky** — ✅ `docs/INSTALACE.md` včetně Gatekeeperu.
+8. **Texty pro web PureStudio** — ✅ `docs/WEB-PURESTUDIO.md` (hodnoty `{{VERZE}}`, `{{SHA256}}`, `{{KONTAKT}}` se doplní při vydání).
+9. **Architektury** — primárně Apple Silicon; Intel viz výše, samostatně k ověření.

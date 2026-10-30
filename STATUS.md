@@ -1,10 +1,11 @@
 # Pure Clipboard – stav projektu
 
-Snímek ze **30. 10. 2026, 01:15**. Sestaveno z Gitu, testů a read-only kontroly Macu po tom, co část práce proběhla v GPT. Podrobnosti o jednotlivých milnících jsou v [PLAN.md](PLAN.md), návody v [README.md](README.md). Tento soubor záměrně nemění PLAN.md, protože ten se právě upravuje v rozpracovaném Milníku 2E.
+Snímek ze **30. 10. 2026** (aktualizováno po Milníku 3). Sestaveno z Gitu, testů a read-only kontroly Macu po tom, co část práce proběhla v GPT. Podrobnosti o jednotlivých milnících jsou v [PLAN.md](PLAN.md), návody v [README.md](README.md). Tento soubor záměrně nemění PLAN.md, protože ten se právě upravuje v rozpracovaném Milníku 2E.
 
 ## 1. Kde co leží (Git)
 
 ```
+(větev milestone-3-distribution)  Milník 3  příprava distribuce: ikona, skripty, dokumenty — bez DMG   v0.5.0
 38e29e4  Milník 2E  Pure Remote na Macu (přehled Tailscale)      v0.5.0   ← main, milestone-2e-pure-remote-mac
 ab6c9b3  Milník 2D  ruční kopírování a pclip bez Auto Copy        v0.4.0   ← milestone-2d-manual-copy
 7fd18e1  Milník 2C  Apple Terminal (příkaz pclip)                  v0.3.0   ← milestone-2c-terminal
@@ -55,7 +56,7 @@ Starší ověření: 2A–2C viz reporty v PLAN.md (Claude Code ověřen v reál
 | 6 | **2E spouští proces** (`tailscale status --json` každé 2 s) – dřívější záruka „aplikace sama nespouští žádné procesy“ už neplatí. Je omezeno na zapnutý přepínač a obrazovku Pure Remote a zápatí bylo správně změněno; **Dokumentace bezpečnostního modelu doplněna** do PLAN.md (pevné cesty, bez shellu, timeout 5 s, žádný zápis); samotný proces `tailscale` unit testem pokrytý není (ověřeno ručně na spojení Mac ↔ S25). | Případně doplnit integrační test. |
 | 7 | ~~`pclip` nebyl reálně ověřen~~ **Ověřeno 30. 10. 2026 ve skutečném interaktivním zsh** (váš `~/.zshrc`, nainstalovaný helper 0.5.0, skutečná konfigurace): úspěšný příkaz se zkopíroval a vrátil kód 0; selhávající příkaz vrátil původní kód 3 a do schránky přidal `[exit 3]`; falešný token se nezkopíroval (schránka beze změny, událost `sensitive-content`). Okno Terminal.app samo ovládáno nebylo. | – |
 | 8 | **Codex Desktop/IDE** nepotvrzeno; schválení hooku probíhá jen v Codex CLI. | Beze změny do ověření. |
-| 9 | **Veřejná distribuce** (DMG, ikona, podpis, SHA-256, návod, české texty, Apple Silicon/Intel) zatím nezačala; požadavky jsou v PLAN.md. | Samostatný milník až po schválení. |
+| 9 | ~~Veřejná distribuce nezačala~~ **Připraveno (Milník 3):** ikona, skripty (DMG/SHA-256/notarizace – jen plán), návod, texty pro web. **DMG ani release nevznikly**; Developer ID/notarizace neověřeny proti Apple; Intel neověřen. | Až na pokyn: `make-dmg.sh --create`, test na čistém účtu, pak vydání. |
 
 ## 6. Doporučené pořadí
 
