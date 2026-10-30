@@ -31,7 +31,7 @@ Průzkum (Codex CLI 0.165.0, dokumentace https://developers.openai.com/codex/hoo
 - Codex má oficiální hooky stejné struktury jako Claude Code. `Stop` dostává na stdin JSON s `last_assistant_message` (`string | null`), `session_id`, `turn_id`, `stop_hook_active`. Exit 0 s prázdným stdout = úspěch.
 - Hooky se čtou z `~/.codex/hooks.json` (nebo inline `[hooks]` v `config.toml`), všechny vrstvy se sčítají. Pure Clipboard používá **jen `~/.codex/hooks.json`**; `config.toml` se nikdy nečte ani nezapisuje (jen se zjistí, zda obsahuje vlastní `[hooks]`, a uživatel se upozorní).
 - **Hook musí uživatel v Codexu schválit** (`/hooks`; schválení je vázané na hash definice). Do schválení se hook přeskakuje (ověřeno: `codex exec` s neschváleným hookem běží a hook mlčky vynechá). Schválení za uživatele neprovádíme a nepoužíváme `--dangerously-bypass-hook-trust`. Příkaz hooku se při aktualizaci pomocného programu nemění (stabilní cesta), takže schválení přetrvá.
-- Rozhraní: Codex CLI = podporováno dle dokumentace. Codex Desktop / IDE rozšíření: dokumentace neuvádí, zda hooky spouští, a nelze to bezpečně ověřit bez zásahu do uživatelského nastavení → **nepotvrzeno, neslibujeme**. Sdílený app-server daemon naznačuje stejné chování, ale není to ověřeno.
+- Rozhraní: Codex CLI = podporováno dle dokumentace. Codex Desktop / IDE rozšíření: dokumentace neuvádí, zda hooky spouští, a nelze to bezpečně ověřit bez zásahu do uživatelského nastavení → **Codex Desktop ověřen 30. 10. 2026** (hook se spustil, odpověď o 4 znacích zkopírována; záznam `last-event-codex.json`), IDE rozšíření nepotvrzeno. Sdílený app-server daemon naznačuje stejné chování, ale není to ověřeno.
 
 Implementace:
 - Společný `StopHookHandler` pro Claude Code i Codex (`pureclipboard-hook claude-stop|codex-stop`); každá integrace má vlastní přepínač a vlastní soubor poslední události (`last-event.json` / `last-event-codex.json`).
@@ -124,7 +124,7 @@ Omezení a neověřeno:
 - Konfigurace: nepovinný `clipboardHistory`; `global.historyLimit` je zachován jen pro kompatibilitu.
 - Distribuce: ad-hoc testovací DMG s pozadím PURE; `notarize.sh` přepočítá SHA-256 po staplování; postup pro Developer ID v docs/DISTRIBUCE.md.
 - Web: `web/pure-clipboard/` (CS/EN stránky, texty, SEO, grafika, předávací dokument pro Codex). Živý web nebyl změněn.
-- Podporováno: Apple Silicon, macOS 14+ (ověřeno na macOS 27). Neověřeno/nepodporováno: Intel, Windows, Android, Codex Desktop.
+- Podporováno: Apple Silicon, macOS 14+ (ověřeno na macOS 27). Neověřeno/nepodporováno: Intel, Windows, Android.
 
 ## Závazné požadavky na veřejnou distribuci
 

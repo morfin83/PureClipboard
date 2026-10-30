@@ -14,7 +14,7 @@ Snímek ze **30. 10. 2026**, verze **0.7.0** (Milník 5). Podrobnosti: [PLAN.md]
 - **Termux na skutečném S25 ověřen 30. 10. 2026** (uživatel, zrcadlení telefonu na Mac): `pcr frommac` doručil text do schránky telefonu (2×), `pcr tomac` doručil 23 znaků do přijaté pošty (v aplikaci čas 6:25:46, `rc=0`), prázdná schránka telefonu je odmítnuta bez přepsání. Dále ověřeno: návratový kód `pcr tomac` u prázdné schránky je 1; `pcr doctor` prošel (ssh ano, termux-api ano, pomocný program 0.7.0, spojení s Macem OK). Termux kanál je ověřen kompletně. Pozorování: vkládání dlouhých řádků z panelu Schránka klávesnice Samsung se přes zrcadlení komolilo (problém vstupu, ne kanálu).
 - **Podepsané a notarizované DMG (Developer ID):** vyžaduje placený Apple Developer Program; postup v docs/DISTRIBUCE.md, neověřen proti Apple.
 - Web: balík `web/pure-clipboard/` je připraven; živý web nebyl změněn; tlačítko ke stažení je neaktivní.
-- Nepodporováno/neověřeno: Intel, Windows, Android, Codex Desktop, macOS starší než 27.
+- Codex Desktop: ověřeno 30. 10. 2026 (uživatel poslal v aplikaci zprávu; `last-event-codex.json` ukázal novou událost 05:45:06Z, 4 znaky, `copied`/`ok`). Nepodporováno/neověřeno: Intel, Windows, Android, macOS starší než 27.
 
 ## Poznámka k historii Gitu
 Autor všech commitů je `morfin83 <houslista.pavel@gmail.com>` – e-mail bude ve veřejné historii viditelný.
