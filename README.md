@@ -1,7 +1,7 @@
 # Pure Clipboard
 
 Nativní macOS aplikace PureStudio se dvěma obrazovkami: **Pure Clipboard** pro kopírování textu na váš pokyn a **Pure Remote** pro živý přehled komunikace Tailscale.
-Aktuální stav: v0.7.0 (Milník 5): historie systémové schránky, Termux, Pure Remote. Podporováno: Apple Silicon, macOS 14+ (ověřeno jen na macOS 27). Intel, Windows ani Android podporované nejsou. Aplikace pro Windows 11 a Android přijdou až po ověření Mac verze. Viz [PLAN.md](PLAN.md).
+Aktuální stav: v0.7.0 (Milník 6): historie systémové schránky, Termux, Pure Remote, přenos souborů Mac → telefon. Podporováno: Apple Silicon, macOS 14+ (ověřeno jen na macOS 27). Intel, Windows ani Android podporované nejsou. Aplikace pro Windows 11 a Android přijdou až po ověření Mac verze. Viz [PLAN.md](PLAN.md).
 
 ```bash
 scripts/build-app.sh                         # sestaví build/PureClipboard.app
@@ -25,6 +25,8 @@ Na Macu je klávesou pro kopírování `⌘`, nikoli `Ctrl`. V terminálu `Ctrl+
 Přejděte v horní části aplikace na obrazovku **Pure Remote** a zapněte její přepínač. Aplikace pak každé dvě sekundy čte `tailscale status --json` z místního Macu. Zobrazuje dostupnost zařízení v tailnetu, typ aktuálního spojení a momentální rychlost odesílání a příjmu **mezi tímto Macem a každým zařízením**. Rychlost se počítá ze změny počítadel `TxBytes` a `RxBytes`; první vzorek proto ukazuje 0 B/s. Funkce vyžaduje nainstalovaný a přihlášený Tailscale s dostupným CLI. Po vypnutí přepínače nebo opuštění obrazovky monitorování skončí. Aplikace neukládá historii provozu.
 
 Mac nemůže ze svého místního stavu změřit živý přenos mezi dvěma jinými zařízeními. Ten přijde až s aplikacemi na dalších platformách. Ovládání připojení a vzdálené probouzení zatím nejsou součástí této obrazovky.
+
+Pod přehledem je karta **Přenos souborů do telefonu**: soubory z Macu se posílají do složky Stažené v telefonu. Přenos jde po dílech přes `adb` (kabel USB má přednost, jinak Wi‑Fi adresa z pole „Adresa telefonu“). Lze ho **pozastavit a pokračovat bez nového začátku**, vidíte průběh a rychlost každého souboru a hotový soubor se před zveřejněním ověří SHA‑256. Existující soubor se nepřepíše. Podrobnosti a naměřené hodnoty: [docs/PRENOS-SOUBORU.md](docs/PRENOS-SOUBORU.md).
 
 ## Historie schránky (v0.7.0)
 
