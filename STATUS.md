@@ -5,8 +5,8 @@ Snímek ze **30. 10. 2026** (aktualizováno po Milníku 3). Sestaveno z Gitu, te
 ## 1. Kde co leží (Git)
 
 ```
-(větev milestone-3-distribution)  Milník 3  příprava distribuce: ikona, skripty, dokumenty — bez DMG   v0.5.0
-38e29e4  Milník 2E  Pure Remote na Macu (přehled Tailscale)      v0.5.0   ← main, milestone-2e-pure-remote-mac
+1e569ec  Milník 3   příprava distribuce: ikona, skripty, dokumenty — bez DMG   v0.5.0   ← main, milestone-3-distribution
+38e29e4  Milník 2E  Pure Remote na Macu (přehled Tailscale)      v0.5.0   ← milestone-2e-pure-remote-mac
 ab6c9b3  Milník 2D  ruční kopírování a pclip bez Auto Copy        v0.4.0   ← milestone-2d-manual-copy
 7fd18e1  Milník 2C  Apple Terminal (příkaz pclip)                  v0.3.0   ← milestone-2c-terminal
 85deaef  Milník 2B  Codex (Stop hook)                              v0.3.0   ← milestone-2b-codex
@@ -14,7 +14,7 @@ ab6c9b3  Milník 2D  ruční kopírování a pclip bez Auto Copy        v0.4.0  
 7db6a79  Milník 1   GUI + bezpečná konfigurace                     v0.1.0   ← tag backup/main-before-2a-2e
 ```
 
-- Všechny milníky jsou lineární řetěz. **`main` byl 30. 10. 2026 lokálně posunut (fast-forward) na Milník 2E**; původní `main` (Milník 1) zůstává pod tagem `backup/main-before-2a-2e`. Nic není pushnuto (repozitář nemá remote). Starší větve 2A–2D zůstávají jako pojmenované body historie.
+- Všechny milníky jsou lineární řetěz. **`main` byl 30. 10. 2026 lokálně posunut (fast-forward) nejdřív na Milník 2E a poté na Milník 3**; původní `main` (Milník 1) zůstává pod tagem `backup/main-before-2a-2e`. Nic není pushnuto (repozitář nemá remote). Starší větve 2A–2D zůstávají jako pojmenované body historie.
 - `STATUS.md` vznikl na větvi `docs/project-status` (z `ab6c9b3`) a do `main` byl 30. 10. 2026 přidán jedním commitem; větev zůstává jako záznam historie změn tohoto souboru.
 - **Milník 2E „Pure Remote na Macu“, v0.5.0 – commitnuto** na větev `milestone-2e-pure-remote-mac` (nad `ab6c9b3`) po opravách z bodů 4 a 6 tabulky níže. Větev je zároveň rozcheckovaná ve vedlejším worktree (složka `PureClipboard-manual` v dočasné složce aplikace Claude); commit tedy přežije i smazání té složky, protože je v tomtéž repozitáři.
 
