@@ -1,6 +1,6 @@
 # Distribuce Pure Clipboard – postup pro vydavatele
 
-Stav (v0.8.0): **lokální testovací ad-hoc DMG existuje** (`dist/PureClipboard-0.8.0-arm64-adhoc-TEST.dmg`, ignorováno Gitem), **nic nebylo vydáno ani publikováno** a nevznikl GitHub Release. Podepsané a notarizované DMG **zbývá** a vyžaduje placený Apple Developer Program. Skripty bez `--create` / `--submit` jen vypíšou plán.
+Stav (v0.8.0): **lokální testovací ad-hoc DMG** pro 0.7.0 existuje (`dist/PureClipboard-0.7.0-arm64-adhoc-TEST.dmg`, ignorováno Gitem); pro 0.8.0 zatím **nebyl vytvořen**, **nic nebylo vydáno ani publikováno** a nevznikl GitHub Release. Podepsané a notarizované DMG **zbývá** a vyžaduje placený Apple Developer Program. Skripty bez `--create` / `--submit` jen vypíšou plán.
 
 Plnění závazných požadavků najdete v [PLAN.md](../PLAN.md).
 
