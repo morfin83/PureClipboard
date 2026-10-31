@@ -32,6 +32,14 @@ public enum TransferPauseReason: String, Codable, Sendable {
     case interrupted
 }
 
+/// Which way a job moves the file. Jobs saved before pulls existed have no `direction` and decode as `.push`.
+public enum TransferDirection: String, Codable, Sendable {
+    /// Mac → phone: `sourcePath` is on the Mac, `destinationDirectory` is on the phone.
+    case push
+    /// Phone → Mac: `sourcePath` is inside `/sdcard/Download` on the phone, `destinationDirectory` is a folder on the Mac.
+    case pull
+}
+
 public struct TransferJob: Codable, Sendable, Identifiable, Equatable {
     public var id: String
     public var sourcePath: String
@@ -41,6 +49,7 @@ public struct TransferJob: Codable, Sendable, Identifiable, Equatable {
     public var sha256: String?
     public var destinationDirectory: String
     public var destinationName: String?
+    public var direction: TransferDirection
     /// Bytes confirmed on the phone (the size of the partial file there).
     public var bytesDone: Int64
     public var state: TransferState
@@ -55,7 +64,8 @@ public struct TransferJob: Codable, Sendable, Identifiable, Equatable {
 
     public init(
         id: String = UUID().uuidString, sourcePath: String, sourceName: String, size: Int64, modifiedAt: Double,
-        destinationDirectory: String, createdAt: Double = Date().timeIntervalSince1970
+        destinationDirectory: String, direction: TransferDirection = .push,
+        createdAt: Double = Date().timeIntervalSince1970
     ) {
         self.id = id
         self.sourcePath = sourcePath
@@ -63,6 +73,7 @@ public struct TransferJob: Codable, Sendable, Identifiable, Equatable {
         self.size = size
         self.modifiedAt = modifiedAt
         self.destinationDirectory = destinationDirectory
+        self.direction = direction
         self.bytesDone = 0
         self.state = .queued
         self.allowMobileData = false
@@ -71,6 +82,38 @@ public struct TransferJob: Codable, Sendable, Identifiable, Equatable {
 
     public var fraction: Double {
         size > 0 ? min(1, Double(bytesDone) / Double(size)) : (state == .completed ? 1 : 0)
+    }
+}
+
+extension TransferJob {
+    private enum CodingKeys: String, CodingKey {
+        case id, sourcePath, sourceName, size, modifiedAt, sha256, destinationDirectory, destinationName, direction
+        case bytesDone, state, pauseReason, message, link, allowMobileData, createdAt, startedAt, finishedAt
+        case averageBytesPerSecond
+    }
+
+    /// Decodes every field as before; `direction` is optional in older files and defaults to `.push`.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        sourcePath = try c.decode(String.self, forKey: .sourcePath)
+        sourceName = try c.decode(String.self, forKey: .sourceName)
+        size = try c.decode(Int64.self, forKey: .size)
+        modifiedAt = try c.decode(Double.self, forKey: .modifiedAt)
+        sha256 = try c.decodeIfPresent(String.self, forKey: .sha256)
+        destinationDirectory = try c.decode(String.self, forKey: .destinationDirectory)
+        destinationName = try c.decodeIfPresent(String.self, forKey: .destinationName)
+        direction = try c.decodeIfPresent(TransferDirection.self, forKey: .direction) ?? .push
+        bytesDone = try c.decode(Int64.self, forKey: .bytesDone)
+        state = try c.decode(TransferState.self, forKey: .state)
+        pauseReason = try c.decodeIfPresent(TransferPauseReason.self, forKey: .pauseReason)
+        message = try c.decodeIfPresent(String.self, forKey: .message)
+        link = try c.decodeIfPresent(TransferLink.self, forKey: .link)
+        allowMobileData = try c.decode(Bool.self, forKey: .allowMobileData)
+        createdAt = try c.decode(Double.self, forKey: .createdAt)
+        startedAt = try c.decodeIfPresent(Double.self, forKey: .startedAt)
+        finishedAt = try c.decodeIfPresent(Double.self, forKey: .finishedAt)
+        averageBytesPerSecond = try c.decodeIfPresent(Double.self, forKey: .averageBytesPerSecond)
     }
 }
 

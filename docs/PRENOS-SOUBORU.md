@@ -1,6 +1,6 @@
 # Přenos souborů do telefonu (Pure Remote)
 
-Verze: 0.8.0 (větev `milestone-6-file-transfer`). Směr: **Mac → telefon**. Cíl na telefonu: **Stažené** (`/sdcard/Download`).
+Verze: 0.8.0 (větev `milestone-6-file-transfer`). Směr: **Mac → telefon**; opačný směr **telefon → Mac** je popsán v sekci „Z telefonu do Macu“ níže. Cíl na telefonu: **Stažené** (`/sdcard/Download`).
 
 ## Co to umí
 - Seznam přenosů v záložce **Pure Remote**: soubor, zdroj → cíl, velikost, průběh, **rychlost u každého souboru**, odhad zbývajícího času, cesta (**Kabel USB**, **Wi‑Fi**, **Mobilní data**).
@@ -38,6 +38,19 @@ Zdrojové soubory se jen čtou. Aplikace nepřidává žádný síťový kód an
 PURECLIPBOARD_REAL_PHONE=100.92.44.15:5555 swift test --filter RealPhone
 ```
 Test pošle jeden 40MB dočasný soubor, uprostřed ho pozastaví, naváže, ověří SHA‑256 na telefonu a smaže ho.
+
+## Z telefonu do Macu
+
+Stav: **NAVRŽENO** a ověřeno testy s falešným telefonem (`PullEngineTests`, `PullAdbLayerTests`). Na reálném telefonu **NEOVĚŘENO**.
+
+- Karta přenosů má sekci **Z telefonu do Macu**. Tlačítko **Načíst seznam** vypíše běžné soubory ze `/sdcard/Download` (jméno, velikost, čas změny). Seznam se nenačítá automaticky.
+- **Stáhnout** u souboru je vždy výslovné kliknutí a stáhne jen ten soubor. Hotový soubor se objeví v **~/Downloads**.
+- Postup: 1) na telefonu se ověří velikost a čas proti seznamu, jinak se nic nestahuje; 2) SHA‑256 se spočítá na telefonu (`sha256sum`); 3) rozsahy bajtů se čtou přes `adb exec-out` (`tail -c +N | head -c L`) a zapisují do `…/transfers/pull/<id>.part` na Macu. Velikost `.part` říká, odkud pokračovat; 4) po posledním dílu se SHA‑256 lokální kopie porovná s telefonem; 5) teprve pak se soubor připojí do ~/Downloads pod volným názvem (`foto (2).jpg`). Připojení pomocí `link(2)` nikdy nepřepíše existující soubor a pracovní `.part` se smaže.
+- Pauza, zrušení, výpadek, chybějící telefon a mobilní data fungují stejně jako u odesílání. Výpadek při dílu pozastaví přenos s důvodem a pokračuje od posledního dílu. Čtení nemá vedlejší účinky, takže ztracená odpověď se jen zopakuje a bajty se nezdvojí.
+- Bezpečnost: čte se jen běžný soubor přímo ve `/sdcard/Download`. Cesty mimo tuto složku, jména s `/` nebo `..` a skryté soubory (včetně `.pureclipboard`) se odmítnou. Zdrojový soubor na telefonu se nemění ani nemaže.
+- Úlohy mají pole `direction` (`push` / `pull`). Starší uložené úlohy bez tohoto pole se načtou jako `push` (ověřeno testem `jobsSavedBeforePullsDecodeAsPush`). Oba enginy čtou stejné úložiště, ale každý zpracuje jen svůj směr.
+- Omezení: výpis a čtení přes `tail -c +N` mohou být u velkých souborů s rostoucím offsetem pomalejší (neměřeno). Notifikace systému se pro stahování zatím nezobrazují.
+- Reálný test (**NAVRŽENO, neprovedeno**): stáhnout malý soubor, který uživatel sám položí do Stažených v telefonu, pozastavit ho uprostřed a pokračovat. Ověřit, že v ~/Downloads vznikl soubor se stejným SHA‑256 jako na telefonu.
 
 ## Rychlá akce „odeslat do S25“ (Finder)
 Od 30. 10. 2026 akce **předává soubory aplikaci**, nepřenáší je sama. Akce je v `~/Library/Services/odeslat do S25.workflow`; původní verze je zálohovaná v `~/Library/Application Support/PureClipboard/backups/quick-action-*`.

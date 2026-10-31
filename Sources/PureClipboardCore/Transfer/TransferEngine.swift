@@ -46,7 +46,8 @@ public actor TransferEngine {
         self.chunkSizeFor = chunkSizeFor
         self.wallClock = wallClock
         self.monotonic = monotonic
-        for var job in store.loadJobs() {
+        // Pulls have their own engine (`PullEngine`) and read the same store; only push jobs belong here.
+        for var job in store.loadJobs() where job.direction == .push {
             // A job that was active when the app stopped is never resumed on its own: the link may be mobile data now.
             if !job.state.isFinished && job.state != .paused {
                 job.state = .paused

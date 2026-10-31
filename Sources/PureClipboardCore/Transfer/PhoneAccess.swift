@@ -14,8 +14,28 @@ public struct ProcessResult: Sendable, Equatable {
     }
 }
 
+/// Like `ProcessResult`, but stdout stays bytes: file contents from `adb exec-out` must not go through a text decoder.
+public struct BinaryResult: Sendable, Equatable {
+    public var status: Int32
+    public var stdout: Data
+    public var stderr: String
+
+    public init(status: Int32, stdout: Data = Data(), stderr: String = "") {
+        self.status = status
+        self.stdout = stdout
+        self.stderr = stderr
+    }
+}
+
 public protocol ProcessRunning: Sendable {
     func run(_ executable: String, _ arguments: [String], timeout: TimeInterval) async throws -> ProcessResult
+    func runBinary(_ executable: String, _ arguments: [String], timeout: TimeInterval) async throws -> BinaryResult
+}
+
+public extension ProcessRunning {
+    func runBinary(_ executable: String, _ arguments: [String], timeout: TimeInterval) async throws -> BinaryResult {
+        throw TransferError.commandFailed("binární čtení není v tomto spouštěči podporováno")
+    }
 }
 
 /// Runs a child process without a shell. A watchdog kills it on timeout and Swift task cancellation kills it at once.
@@ -42,9 +62,14 @@ public struct SystemProcessRunner: ProcessRunning {
     }
 
     public func run(_ executable: String, _ arguments: [String], timeout: TimeInterval) async throws -> ProcessResult {
+        let raw = try await runBinary(executable, arguments, timeout: timeout)
+        return ProcessResult(status: raw.status, stdout: String(decoding: raw.stdout, as: UTF8.self), stderr: raw.stderr)
+    }
+
+    public func runBinary(_ executable: String, _ arguments: [String], timeout: TimeInterval) async throws -> BinaryResult {
         let box = Box()
         return try await withTaskCancellationHandler {
-            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<ProcessResult, Error>) in
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<BinaryResult, Error>) in
                 DispatchQueue.global(qos: .userInitiated).async {
                     let process = box.process
                     let out = Pipe()
@@ -86,9 +111,9 @@ public struct SystemProcessRunner: ProcessRunning {
                     let flags = box.flags
                     if flags.cancelled { continuation.resume(throwing: CancellationError()); return }
                     if flags.timedOut { continuation.resume(throwing: TransferError.timedOut); return }
-                    continuation.resume(returning: ProcessResult(
+                    continuation.resume(returning: BinaryResult(
                         status: process.terminationStatus,
-                        stdout: String(decoding: outData, as: UTF8.self),
+                        stdout: outData,
                         stderr: String(decoding: errData, as: UTF8.self)
                     ))
                 }
@@ -102,11 +127,34 @@ public struct SystemProcessRunner: ProcessRunning {
 
 // MARK: Phone operations
 
+/// A regular file on the phone: name, full path, size and modification time (Unix seconds).
+public struct PhoneFileEntry: Sendable, Equatable, Identifiable {
+    public var name: String
+    public var path: String
+    public var size: Int64
+    public var modifiedAt: Double
+
+    public var id: String { path }
+
+    public init(name: String, path: String, size: Int64, modifiedAt: Double) {
+        self.name = name
+        self.path = path
+        self.size = size
+        self.modifiedAt = modifiedAt
+    }
+}
+
 /// Everything the transfer engine needs from the phone. Implemented over `adb`; tests use a local folder.
 public protocol PhoneFiles: Sendable {
     func freeBytes(at path: String) async throws -> Int64
     func exists(_ path: String) async throws -> Bool
     func size(of path: String) async throws -> Int64?
+    /// Regular, non-hidden files directly inside `folder` (phone → Mac direction). Newest first.
+    func listFiles(in folder: String) async throws -> [PhoneFileEntry]
+    /// The regular file at `path`, or nil when there is none.
+    func entry(at path: String) async throws -> PhoneFileEntry?
+    /// Up to `length` bytes starting at `offset`; shorter only when the file ends first. Reads have no side effects.
+    func readRange(_ path: String, offset: Int64, length: Int64) async throws -> Data
     func makeDirectory(_ path: String) async throws
     func truncate(_ path: String, to size: Int64) async throws
     func push(local: URL, to remote: String, timeout: TimeInterval) async throws
@@ -271,6 +319,52 @@ public struct AdbPhone: PhoneFiles {
     /// Removes `<base>/.pureclipboard` when nothing is left in it (best effort).
     public func removeStagingRootIfEmpty(base: String) async {
         _ = try? await shell("rmdir \(ShellQuoting.quote("\(base)/\(PhoneStaging.folderName)")) 2>/dev/null; true")
+    }
+
+    public func listFiles(in folder: String) async throws -> [PhoneFileEntry] {
+        guard folder == PullSafety.downloadsFolder else {
+            throw TransferError.invalidSource("Ze telefonu lze číst jen složku Stažené.")
+        }
+        // The glob skips hidden names; `-f` keeps only regular files. `stat` prints size|mtime|path, one per line.
+        let glob = ShellQuoting.quote(folder) + "/*"
+        let output = try await shell("for f in \(glob); do if [ -f \"$f\" ]; then stat -c '%s|%Y|%n' \"$f\"; fi; done", timeout: 120)
+        var entries: [PhoneFileEntry] = []
+        for line in output.split(whereSeparator: \.isNewline) {
+            let fields = line.split(separator: "|", maxSplits: 2, omittingEmptySubsequences: false)
+            guard fields.count == 3, let size = Int64(fields[0]), let modified = Double(fields[1]) else { continue }
+            let path = String(fields[2])
+            guard path.hasPrefix(folder + "/") else { continue }
+            let name = String(path.dropFirst(folder.count + 1))
+            guard PullSafety.isSafeName(name) else { continue }
+            entries.append(PhoneFileEntry(name: name, path: path, size: size, modifiedAt: modified))
+        }
+        return entries.sorted { ($0.modifiedAt, $0.name) > ($1.modifiedAt, $1.name) }
+    }
+
+    public func entry(at path: String) async throws -> PhoneFileEntry? {
+        guard PullSafety.isAllowedSource(path) else { throw TransferError.invalidSource("Zdroj je mimo povolenou složku Stažené.") }
+        let quoted = ShellQuoting.quote(path)
+        let output = try await shell("if [ -f \(quoted) ]; then stat -c '%s|%Y' \(quoted); else echo missing; fi")
+        let fields = output.trimmingCharacters(in: .whitespacesAndNewlines).split(separator: "|")
+        guard fields.count == 2, let size = Int64(fields[0]), let modified = Double(fields[1]) else { return nil }
+        return PhoneFileEntry(
+            name: String(path.dropFirst(PullSafety.downloadsFolder.count + 1)), path: path, size: size, modifiedAt: modified
+        )
+    }
+
+    public func readRange(_ path: String, offset: Int64, length: Int64) async throws -> Data {
+        guard PullSafety.isAllowedSource(path), offset >= 0, length > 0 else {
+            throw TransferError.invalidSource("Zdroj je mimo povolenou složku Stažené.")
+        }
+        // `tail -c +N` counts from 1; `head -c` cuts the range. `exec-out` keeps the bytes binary-safe.
+        let command = "tail -c +\(offset + 1) \(ShellQuoting.quote(path)) | head -c \(length)"
+        let timeout = max(60, 30 + Double(length) / 100_000)
+        let result = try await runner.runBinary(adb, ["-s", serial, "exec-out", command], timeout: timeout)
+        guard result.status == 0 else {
+            let detail = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+            throw TransferError.commandFailed(String(detail.prefix(200)))
+        }
+        return result.stdout
     }
 
     public func refreshMedia(_ path: String) async {

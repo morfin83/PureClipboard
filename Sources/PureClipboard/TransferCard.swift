@@ -41,8 +41,75 @@ struct TransferCard: View {
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.tertiaryText)
                     .fixedSize(horizontal: false, vertical: true)
+                Divider().overlay(Theme.cardBorder)
+                pullSection
             }
         }
+    }
+
+    /// Phone → Mac. The list is read only after a click on „Načíst seznam“; every download is a click on „Stáhnout“.
+    private var pullSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Z telefonu do Macu")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Theme.primaryText)
+            HStack(spacing: 10) {
+                Button("Načíst seznam") { transfer.loadPhoneFiles() }
+                    .accessibilityIdentifier("transfer.loadList")
+                if let message = transfer.phoneListMessage {
+                    Text(message)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.secondaryText)
+                        .lineLimit(2)
+                }
+            }
+            if transfer.phoneListLoaded && !transfer.phoneFiles.isEmpty {
+                VStack(spacing: 1) {
+                    ForEach(transfer.phoneFiles) { file in
+                        phoneFileRow(file)
+                        if file.id != transfer.phoneFiles.last?.id { Divider().overlay(Theme.cardBorder) }
+                    }
+                }
+                .padding(.horizontal, 14)
+                .background(Color.white.opacity(0.025), in: RoundedRectangle(cornerRadius: 12))
+            }
+            if !transfer.pullJobs.isEmpty {
+                VStack(spacing: 1) {
+                    ForEach(transfer.pullJobs) { job in
+                        TransferRow(job: job, speed: transfer.speeds[job.id] ?? 0)
+                        if job.id != transfer.pullJobs.last?.id { Divider().overlay(Theme.cardBorder) }
+                    }
+                }
+                .padding(.horizontal, 14)
+                .background(Color.white.opacity(0.025), in: RoundedRectangle(cornerRadius: 12))
+            }
+            Text("Stahuje se jen soubor, na který kliknete, z Stažených v telefonu. Ukládá se po dílech do pracovní složky aplikace, ověří se kontrolním součtem SHA‑256 a teprve potom se přesune do Stažených v Macu pod novým názvem. Existující soubor se nepřepíše.")
+                .font(.system(size: 11))
+                .foregroundStyle(Theme.tertiaryText)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func phoneFileRow(_ file: PhoneFileEntry) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "doc")
+                .foregroundStyle(Theme.secondaryText)
+                .frame(width: 18)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(file.name)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Theme.primaryText)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                Text("\(TransferFormat.bytes(file.size)) · \(Date(timeIntervalSince1970: file.modifiedAt).formatted(date: .abbreviated, time: .shortened))")
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(Theme.secondaryText)
+            }
+            Spacer(minLength: 8)
+            Button("Stáhnout") { transfer.download(file) }
+                .controlSize(.small)
+        }
+        .padding(.vertical, 9)
     }
 
     private var header: some View {
@@ -184,8 +251,12 @@ private struct TransferRow: View {
     }
 
     private var route: String {
-        let folder = job.destinationDirectory == TransferSettings.defaultDestination ? "Stažené" : job.destinationDirectory
         let name = job.destinationName ?? job.sourceName
+        if job.direction == .pull {
+            let target = (job.destinationDirectory as NSString).abbreviatingWithTildeInPath
+            return "telefon · Stažené/\(job.sourceName)  →  \(target)/\(name)"
+        }
+        let folder = job.destinationDirectory == TransferSettings.defaultDestination ? "Stažené" : job.destinationDirectory
         let source = (job.sourcePath as NSString).deletingLastPathComponent
         return "\((source as NSString).abbreviatingWithTildeInPath)  →  telefon · \(folder)/\(name)"
     }
@@ -225,7 +296,8 @@ private struct TransferRow: View {
             return "\(done) z \(total) · \(Int(job.fraction * 100)) % · \(rate)\(eta)"
         case .pausing: return "Pozastavuje se po dokončení aktuálního dílu · \(done) z \(total)"
         case .paused: return (job.message ?? "Pozastaveno") + " · \(done) z \(total)"
-        case .verifying: return "Ověřuji kontrolní součet na telefonu · \(total)"
+        case .verifying:
+            return (job.direction == .pull ? "Ověřuji kontrolní součet v Macu · " : "Ověřuji kontrolní součet na telefonu · ") + total
         case .completed:
             let rate = job.averageBytesPerSecond.map { " · průměr \(TransferFormat.speed($0))" } ?? ""
             return "Hotovo · \(total)\(rate)"
@@ -245,7 +317,7 @@ private struct TransferRow: View {
                 Button("Pokračovat") { transfer.resume(job) }
             case .paused:
                 if job.pauseReason == .mobileData {
-                    Button("Přesto poslat") { transfer.resumeOnMobileData(job) }
+                    Button(job.direction == .pull ? "Přesto stáhnout" : "Přesto poslat") { transfer.resumeOnMobileData(job) }
                 } else {
                     Button("Pokračovat") { transfer.resume(job) }
                 }
