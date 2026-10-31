@@ -171,6 +171,11 @@
       "file": "assets/clipboard.png",
       "alt": "Pure Clipboard tab: Auto Copy, integrations, sensitive-data protection and the Termux and Terminal cards",
       "caption": "Integrations are optional and off until you turn them on."
+    },
+    {
+      "file": "assets/quick-history.png",
+      "alt": "Quick history on ⌥⌘V: search and pick recent items",
+      "caption": "Sample data. The search field at the top of the window is not in the picture."
     }
   ],
   "footer": "PURE · Lab",

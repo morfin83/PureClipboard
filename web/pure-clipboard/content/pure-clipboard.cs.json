@@ -171,6 +171,11 @@
       "file": "assets/clipboard.png",
       "alt": "Záložka Pure Clipboard: Auto Copy, integrace, ochrana citlivých údajů a karty Termux a Terminal",
       "caption": "Integrace jsou volitelné a vypnuté, dokud je nezapnete."
+    },
+    {
+      "file": "assets/quick-history.png",
+      "alt": "Rychlá historie na ⌥⌘V: hledání a výběr posledních položek",
+      "caption": "Ukázková data. Na snímku chybí pole pro hledání, které je nahoře v okně."
     }
   ],
   "footer": "PURE · Lab",

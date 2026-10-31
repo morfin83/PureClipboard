@@ -35,6 +35,35 @@ enum ScreenshotMode {
         seedHistory(directory: HistoryStore.defaultDirectory(configURL: configURL), settings: config.clipboardHistory, scratch: scratch)
         render(config: config, configURL: configURL, section: .history, name: "app-history-on", into: directory)
         render(config: config, configURL: configURL, section: .remote, name: "app-remote", into: directory)
+        let seeded = HistoryStore(directory: HistoryStore.defaultDirectory(configURL: configURL)).items()
+        renderQuickHistory(items: seeded, name: "app-quick-history", into: directory)
+    }
+
+    /// Renders the real quick-history list (the ⌥⌘V panel content) with the same invented sample items.
+    @MainActor
+    private static func renderQuickHistory(items: [HistoryItem], name: String, into directory: URL) {
+        let state = QuickHistoryState()
+        state.historyEnabled = true
+        state.picker.setItems(items)
+        let view = QuickHistoryListView(state: state, onChoose: {})
+            .environment(\.colorScheme, .dark)
+            .frame(width: 420, height: 320)
+            .padding(12)
+            .background(Theme.background)
+        let host = NSHostingView(rootView: view)
+        host.appearance = NSAppearance(named: .darkAqua)
+        let size = host.fittingSize
+        let window = NSWindow(contentRect: NSRect(origin: .zero, size: size), styleMask: [.borderless], backing: .buffered, defer: false)
+        window.appearance = NSAppearance(named: .darkAqua)
+        window.contentView = host
+        host.frame = NSRect(origin: .zero, size: size)
+        host.layoutSubtreeIfNeeded()
+        guard let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { return }
+        host.cacheDisplay(in: host.bounds, to: rep)
+        if let data = rep.representation(using: .png, properties: [:]) {
+            try? data.write(to: directory.appendingPathComponent("\(name).png"))
+            print("\(name).png  \(rep.pixelsWide)×\(rep.pixelsHigh)")
+        }
     }
 
     private static func render(config: PureClipboardConfig, configURL: URL, section: StudioSection, name: String, into directory: URL) {
