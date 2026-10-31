@@ -2,6 +2,7 @@ import AppKit
 import Foundation
 import Observation
 import PureClipboardCore
+import UserNotifications
 
 /// A resolver used when `adb` is not installed: every job pauses with an explanation instead of failing silently.
 private struct MissingAdbResolver: PhoneResolving {
@@ -47,6 +48,7 @@ final class TransferController {
     private func start() async {
         await engine.setObserver { [weak self] jobs, speeds in
             Task { @MainActor in
+                self?.notifyChanges(from: self?.jobs ?? [], to: jobs)
                 self?.jobs = jobs
                 self?.speeds = speeds
             }
@@ -56,6 +58,28 @@ final class TransferController {
                 await self?.pickUpRequests()
                 try? await Task.sleep(for: .seconds(1))
             }
+        }
+    }
+
+    /// Notifies only about state changes that need the user (finished, failed, waiting for mobile data or a phone).
+    private func notifyChanges(from old: [TransferJob], to new: [TransferJob]) {
+        let previous = Dictionary(uniqueKeysWithValues: old.map { ($0.id, $0.state) })
+        for job in new {
+            // A job seen for the first time (e.g. restored at launch) is not news.
+            guard let before = previous[job.id],
+                  let message = TransferNotice.message(for: job, previous: before) else { continue }
+            post(message, id: job.id)
+        }
+    }
+
+    private func post(_ message: TransferNotice.Message, id: String) {
+        let center = UNUserNotificationCenter.current()
+        center.requestAuthorization(options: [.alert, .sound]) { granted, _ in
+            guard granted else { return }
+            let content = UNMutableNotificationContent()
+            content.title = message.title
+            content.body = message.body
+            center.add(UNNotificationRequest(identifier: "transfer-\(id)-\(message.title)", content: content, trigger: nil))
         }
     }
 
