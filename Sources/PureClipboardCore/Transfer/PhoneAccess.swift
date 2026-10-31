@@ -356,8 +356,16 @@ public struct AdbPhone: PhoneFiles {
         guard PullSafety.isAllowedSource(path), offset >= 0, length > 0 else {
             throw TransferError.invalidSource("Zdroj je mimo povolenou složku Stažené.")
         }
-        // `tail -c +N` counts from 1; `head -c` cuts the range. `exec-out` keeps the bytes binary-safe.
-        let command = "tail -c +\(offset + 1) \(ShellQuoting.quote(path)) | head -c \(length)"
+        // Offsets that are whole MiB (every chunk size is) let `dd` seek directly; `tail -c +N` reads from the start
+        // of the file each time, which gets slow on large files. `exec-out` keeps the bytes binary-safe.
+        let mib: Int64 = 1_048_576
+        let source = ShellQuoting.quote(path)
+        let command: String
+        if offset % mib == 0 {
+            command = "dd if=\(source) bs=\(mib) skip=\(offset / mib) count=\((length + mib - 1) / mib) 2>/dev/null | head -c \(length)"
+        } else {
+            command = "tail -c +\(offset + 1) \(source) | head -c \(length)"
+        }
         let timeout = max(60, 30 + Double(length) / 100_000)
         let result = try await runner.runBinary(adb, ["-s", serial, "exec-out", command], timeout: timeout)
         guard result.status == 0 else {

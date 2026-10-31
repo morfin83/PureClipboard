@@ -312,6 +312,14 @@ private final class BinaryRunner: ProcessRunning, @unchecked Sendable {
         #expect(runner.calls.last == ["-s", "S", "exec-out", "tail -c +4 '/sdcard/Download/it'\\''s.jpg' | head -c 4"])
     }
 
+    @Test func readRangeSeeksWithDdAtWholeMiB() async throws {
+        let runner = BinaryRunner()
+        runner.binary = BinaryResult(status: 0, stdout: Data([1, 2, 3]))
+        let phone = AdbPhone(adb: "/x/adb", serial: "S", runner: runner)
+        _ = try await phone.readRange("/sdcard/Download/a.bin", offset: 8_388_608, length: 4_194_304)
+        #expect(runner.calls.last == ["-s", "S", "exec-out", "dd if='/sdcard/Download/a.bin' bs=1048576 skip=8 count=4 2>/dev/null | head -c 4194304"])
+    }
+
     @Test func readRangeRefusesPathsOutsideDownloads() async throws {
         let runner = BinaryRunner()
         let phone = AdbPhone(adb: "/x/adb", serial: "S", runner: runner)
