@@ -2,7 +2,7 @@ import AppKit
 import Foundation
 import Observation
 import PureClipboardCore
-import UserNotifications
+@preconcurrency import UserNotifications
 
 /// A resolver used when `adb` is not installed: every job pauses with an explanation instead of failing silently.
 private struct MissingAdbResolver: PhoneResolving {
