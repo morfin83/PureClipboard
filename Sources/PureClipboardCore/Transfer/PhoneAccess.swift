@@ -119,6 +119,25 @@ public protocol PhoneFiles: Sendable {
     func removeStaging(_ path: String) async throws
     /// Removes `<base>/.pureclipboard` when nothing is left in it (best effort, never throws).
     func removeStagingRootIfEmpty(base: String) async
+    /// Asks the phone's media index to pick up a new file so it appears in Gallery (best effort, never throws).
+    func refreshMedia(_ path: String) async
+}
+
+public extension PhoneFiles {
+    func refreshMedia(_ path: String) async {}
+}
+
+public enum MediaFiles {
+    /// Extensions Android indexes as images, video or audio; anything else is left alone.
+    private static let indexed: Set<String> = [
+        "jpg", "jpeg", "png", "gif", "webp", "heic", "heif", "bmp", "dng",
+        "mp4", "mov", "m4v", "3gp", "mkv", "webm", "avi",
+        "mp3", "m4a", "aac", "ogg", "oga", "flac", "wav",
+    ]
+
+    public static func needsIndexing(_ name: String) -> Bool {
+        indexed.contains(URL(fileURLWithPath: name).pathExtension.lowercased())
+    }
 }
 
 public enum PhoneStaging {
@@ -252,6 +271,15 @@ public struct AdbPhone: PhoneFiles {
     /// Removes `<base>/.pureclipboard` when nothing is left in it (best effort).
     public func removeStagingRootIfEmpty(base: String) async {
         _ = try? await shell("rmdir \(ShellQuoting.quote("\(base)/\(PhoneStaging.folderName)")) 2>/dev/null; true")
+    }
+
+    public func refreshMedia(_ path: String) async {
+        guard MediaFiles.needsIndexing(path) else { return }
+        let uri = URL(fileURLWithPath: path).absoluteString
+        _ = try? await runner.run(adb, [
+            "-s", serial, "shell",
+            "am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d \(ShellQuoting.quote(uri)) >/dev/null 2>&1",
+        ], timeout: 30)
     }
 }
 

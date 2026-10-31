@@ -30,7 +30,7 @@ Zdrojové soubory se jen čtou. Aplikace nepřidává žádný síťový kód an
 - Kabel (USB) je připravený, ale **nebyl vyzkoušen**.
 - Dílové posílání je sekvenční (jeden proud). Souběžné proudy a souběžný kabel + Wi‑Fi nejsou.
 - Úložiště telefonu musí mít místo na velikost souboru + 64 MB.
-- Obrázky se v Galerii nemusí objevit hned (Android si indexuje soubory sám).
+- Fotky a videa po přenosu Android indexuje přes broadcast `MEDIA_SCANNER_SCAN_FILE` (jen přípony obrázků, videa a zvuku). **Na zařízení zatím neověřeno**, Android 11+ může broadcast omezit; bez něj se soubor v Galerii objeví až po čase.
 - Bezdrátový ADB: port `5555` otevřený příkazem `adb tcpip 5555` se po restartu telefonu zavře. Alternativa: **Bezdrátové ladění** v nastavení pro vývojáře (adresa i port se tam zobrazí a mohou se měnit).
 
 ## Jak ověřit na reálném telefonu

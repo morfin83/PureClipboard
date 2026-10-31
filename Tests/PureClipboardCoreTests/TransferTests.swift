@@ -85,6 +85,8 @@ private final class FakePhone: PhoneFiles, @unchecked Sendable {
         guard PhoneStaging.isStagingPath(path) else { throw TransferError.commandFailed("mimo pracovní složku") }
         try? FileManager.default.removeItem(at: url(path))
     }
+    var refreshed: [String] = []
+    func refreshMedia(_ path: String) async { lock.withLock { refreshed.append(path) } }
     func removeStagingRootIfEmpty(base: String) async {
         let directory = url("\(base)/\(PhoneStaging.folderName)")
         if (try? FileManager.default.contentsOfDirectory(atPath: directory.path))?.isEmpty == true {
@@ -441,6 +443,36 @@ private let downloads = "/sdcard/Download"
 }
 
 // MARK: Small pieces
+
+@Suite struct MediaIndexTests {
+    @Test func onlyMediaFilesAreIndexed() {
+        #expect(MediaFiles.needsIndexing("IMG_0001.JPG"))
+        #expect(MediaFiles.needsIndexing("video.mov"))
+        #expect(MediaFiles.needsIndexing("song.flac"))
+        #expect(!MediaFiles.needsIndexing("Prezentace.pdf"))
+        #expect(!MediaFiles.needsIndexing("README"))
+    }
+
+    @Test func adbBroadcastIsQuotedAndEncoded() async throws {
+        let runner = RecordingRunner()
+        let phone = AdbPhone(adb: "/x/adb", serial: "S", runner: runner)
+        await phone.refreshMedia("/sdcard/Download/moje fotka.jpg")
+        let command = try #require(runner.calls.last?.last)
+        #expect(command.hasPrefix("am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d 'file:///sdcard/Download/moje%20fotka.jpg'"))
+        await phone.refreshMedia("/sdcard/Download/text.txt")
+        #expect(runner.calls.count == 1)
+    }
+
+    @Test func engineAsksForIndexingOfTransferredMedia() async throws {
+        let lab = try Lab()
+        let engine = lab.engine(resolver: FakeResolver(phone: lab.phone))
+        let photo = try lab.source("foto.jpg")
+        let doc = try lab.source("doc.pdf", bytes: 1_000)
+        await engine.enqueue(paths: [photo.path, doc.path])
+        await engine.waitUntilIdle()
+        #expect(lab.phone.refreshed == ["\(downloads)/foto.jpg", "\(downloads)/doc.pdf"])
+    }
+}
 
 @Suite struct TransferPiecesTests {
     @Test func speedMeterUsesTheWindow() {

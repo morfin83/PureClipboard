@@ -360,6 +360,7 @@ public actor TransferEngine {
         guard moved else { throw TransferError.destinationBusy }
         try? await phone.removeStaging(staging)
         await phone.removeStagingRootIfEmpty(base: job.destinationDirectory)
+        await phone.refreshMedia("\(job.destinationDirectory)/\(finalName)")
 
         let end = monotonic()
         let average = sessionStart[id].flatMap { start -> Double? in
