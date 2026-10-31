@@ -2,6 +2,11 @@
 
 Snímek ze **30. 10. 2026**, verze **0.8.0** (Milník 6: přenos souborů, viz [docs/PRENOS-SOUBORU.md](docs/PRENOS-SOUBORU.md)). Podrobnosti: [PLAN.md](PLAN.md), [README.md](README.md), [docs/HISTORIE.md](docs/HISTORIE.md), [docs/DISTRIBUCE.md](docs/DISTRIBUCE.md).
 
+## Stav k 1. 11. 2026
+- Verze **0.8.0 (build 8)**, `main` na `644a61f` (pushnuto). Obsahuje: přenos souborů v obou směrech, rychlou historii ⌥⌘V (`QuickPickerModel`, `GlobalHotKey`), oznámení na Macu, indexaci médií, CI workflow.
+- Nainstalováno v `/Applications` z testovacího ad-hoc DMG (`~/Downloads/PureClipboard-0.8.0-arm64-adhoc-TEST.dmg`, SHA-256 `642ae0ae…`), nenotarizováno, nepublikováno.
+- Ověřeno uživatelem (podle jeho zadání): stažení z telefonu a zkratka ⌥⌘V (výsledky viz historie chatu; pokud nebyly výslovně zapsány, zapsat při dalším ověření).
+
 ## Hotovo a ověřeno (na tomto MacBooku Pro, Apple Silicon, macOS 27.2)
 - `swift test`: **247/247** (Milník 6 přidal 38 testů přenosu souborů s falešným telefonem; reálný test na S25 je volitelný přes `PURECLIPBOARD_REAL_PHONE`).
 - `scripts/build-app.sh`: OK, v0.8.0 (CFBundleVersion 8), helper hlásí 0.8.0, `codesign --verify --strict --deep` OK (ad-hoc).

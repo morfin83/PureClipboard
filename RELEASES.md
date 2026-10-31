@@ -16,7 +16,7 @@ Provozní přehled každé verze: tag, commit, build, stav distribuce a schvále
 | 0.5.0 | 5 | `v0.5.0` | `1e569ec` | 2026-10-30 | jen zdroje | Milník 3: příprava distribuce, Pure Remote |
 | 0.6.0 | 6 | `v0.6.0` | `3047a4c` | 2026-10-30 | jen zdroje | Milník 4: Termux (Mac strana) |
 | 0.7.0 | 7 | `v0.7.0` | `ccab8c2` | 2026-10-30 | lokální testovací ad-hoc DMG (`dist/`, nepublikováno) | Milník 5: historie systémové schránky |
-| 0.8.0 | 8 | `v0.8.0` | `0d91ca0` | 2026-10-30 | jen zdroje (DMG zatím nevytvořen) | Milník 6: přenos souborů do telefonu |
+| 0.8.0 | 8 | `v0.8.0` | `0d91ca0` | 2026-10-30 | lokální testovací ad-hoc DMG (`dist/`, Downloads, nepublikováno; SHA-256 `642ae0ae…`) | Milník 6: přenos souborů do telefonu; po něm přidány ⌥⌘V, stahování z telefonu, oznámení (main `644a61f`) |
 
 **Ověřeno na zařízeních:** 0.6.0 Termux, 0.7.0 Codex Desktop, 0.8.0 přenos souborů na S25 přes Wi‑Fi. Podrobně [STATUS.md](STATUS.md).
 

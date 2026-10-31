@@ -45,6 +45,10 @@
     {
       "title": "Pure Remote",
       "text": "An overview of Tailscale connections between this Mac and your devices. It reads local state only and stores nothing."
+    },
+    {
+      "title": "Transfers to the phone",
+      "text": "Send files from the Mac to the phone's Downloads folder and back, in chunks and resumable. SHA-256 check, nothing overwritten."
     }
   ],
   "privacyTitle": "Privacy",
@@ -103,6 +107,16 @@
   "changelog": [
     {
       "version": "0.8.0",
+      "date": "2026-11-01",
+      "items": [
+        "File transfer to and from the phone (Pure Remote): sent in chunks over ADB, with pause and resume without starting over, SHA-256 verification, and no overwriting of existing files.",
+        "Quick clipboard history with the ⌥⌘V shortcut: search and select, Enter copies to the clipboard, nothing is pasted automatically.",
+        "macOS notifications when a transfer finishes, fails, or waits for mobile data or the phone.",
+        "Photos and videos sent to the phone appear in Gallery; test ad-hoc build, not notarized yet."
+      ]
+    },
+    {
+      "version": "0.7.0",
       "date": "2026-10-30",
       "items": [
         "System clipboard history (off by default): text, rich text, images, PDFs, files and folders as links.",

@@ -45,6 +45,10 @@
     {
       "title": "Pure Remote",
       "text": "Přehled spojení Tailscale mezi tímto Macem a vašimi zařízeními. Čte jen místní stav a nic neukládá."
+    },
+    {
+      "title": "Přenos do telefonu",
+      "text": "Soubory z Macu do složky Stažené v telefonu i zpět, po dílech a s pokračováním. Kontrola SHA-256 a žádné přepisování."
     }
   ],
   "privacyTitle": "Soukromí",
@@ -103,6 +107,16 @@
   "changelog": [
     {
       "version": "0.8.0",
+      "date": "2026-11-01",
+      "items": [
+        "Přenos souborů do telefonu a zpět (Pure Remote): po dílech přes ADB, s pauzou a pokračováním bez nového začátku, kontrolou SHA-256 a bez přepisování existujících souborů.",
+        "Rychlá historie schránky klávesovou zkratkou ⌥⌘V: hledání a výběr, Enter zkopíruje do schránky, nic se nevkládá automaticky.",
+        "Oznámení na Macu při dokončení přenosu, selhání nebo čekání na mobilní data či telefon.",
+        "Fotky a videa přenesené do telefonu se objeví v Galerii; testovací ad-hoc sestavení, zatím bez notarizace."
+      ]
+    },
+    {
+      "version": "0.7.0",
       "date": "2026-10-30",
       "items": [
         "Historie systémové schránky (vypnutá ve výchozím stavu): text, formátovaný text, obrázky, PDF, soubory a složky jako odkazy.",

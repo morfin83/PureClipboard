@@ -1,6 +1,6 @@
 # Předávací dokument pro Codex – stránka Pure Clipboard (PURE / Lab)
 
-Stav: **podklady hotové, živý web nebyl upraven.** Referenční vzhled: https://www.studiopuresound.cz/cs/lab/usage-meter-pure/ (a `/en/`).
+Stav: **podklady hotové (aktualizováno na verzi 0.8.0, 1. 11. 2026), živý web nebyl upraven.** Referenční vzhled: https://www.studiopuresound.cz/cs/lab/usage-meter-pure/ (a `/en/`).
 
 ## Soubory (relativně k `web/pure-clipboard/`)
 | Cesta | Obsah |

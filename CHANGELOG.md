@@ -5,7 +5,12 @@
 - Hotový soubor se ověří SHA‑256 na telefonu a teprve potom se přesune do cíle; existující soubor se nepřepíše.
 - Mobilní data se nepoužijí bez potvrzení.
 - Rychlá akce „odeslat do S25“ předává soubory aplikaci (původní verze zálohovaná).
+- Stahování z telefonu do Macu (Pure Remote → Z telefonu do Macu): výpis složky Stažené, stažení po dílech s pauzou a pokračováním, kontrola SHA-256, soubor se uloží do `~/Downloads` bez přepsání.
+- Rychlá historie schránky klávesovou zkratkou ⌥⌘V (vyžaduje zapnutou historii); Enter zkopíruje položku, nic se nevkládá automaticky.
+- Oznámení na Macu při dokončení, selhání nebo čekání přenosu na mobilní data či telefon.
+- Fotky a videa přenesené do telefonu se indexují pro Galerii.
 - Pomocný program: příkaz `transfer-enqueue`.
+- Testy: 287 (CI workflow `.github/workflows/tests.yml`, zatím neověřený na GitHubu).
 
 ## 0.7.0 (2026-10-30)
 - **Historie systémové schránky** (ve výchozím stavu vypnutá; sleduje jen po zapnutí a při běžící aplikaci): text, formátovaný text (RTF), obrázky, PDF, soubory a složky z Finderu (jen odkazy na originály).
