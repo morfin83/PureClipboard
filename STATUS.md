@@ -7,6 +7,8 @@ Snímek ze **30. 10. 2026**, verze **0.8.0** (Milník 6: přenos souborů, viz [
 - Nainstalováno v `/Applications` z testovacího ad-hoc DMG (`~/Downloads/PureClipboard-0.8.0-arm64-adhoc-TEST.dmg`, SHA-256 `642ae0ae…`), nenotarizováno, nepublikováno.
 - Ověřeno uživatelem (podle jeho zadání): stažení z telefonu a zkratka ⌥⌘V (výsledky viz historie chatu; pokud nebyly výslovně zapsány, zapsat při dalším ověření).
 
+**Zařízení pro testy (potvrzeno vlastníkem 2026-11-01):** telefon Samsung Galaxy S25+ (Android), Mac MacBook Pro (Apple Silicon), macOS 27.2. Starší záznamy s „S25“ se týkají téhož telefonu.
+
 ## Hotovo a ověřeno (na tomto MacBooku Pro, Apple Silicon, macOS 27.2)
 - `swift test`: **247/247** (Milník 6 přidal 38 testů přenosu souborů s falešným telefonem; reálný test na S25 je volitelný přes `PURECLIPBOARD_REAL_PHONE`).
 - `scripts/build-app.sh`: OK, v0.8.0 (CFBundleVersion 8), helper hlásí 0.8.0, `codesign --verify --strict --deep` OK (ad-hoc).

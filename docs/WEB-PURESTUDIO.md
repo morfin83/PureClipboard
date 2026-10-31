@@ -17,10 +17,12 @@ Hotové české texty k vložení na stránku. Hodnoty ve složených závorkác
 
 ## Hlavička (hero)
 
+> Aktualizace 2026-11-01: popis musí zmiňovat záložku Pure Remote a přenosy z Androidu, ne jen schránku.
+
 **Pure Clipboard**
 *Odpovědi AI ve schránce přesně tehdy, když je chcete.*
 
-Pure Clipboard je malá nativní aplikace pro Mac. Pomáhá přenášet odpovědi mezi AI nástroji, kopíruje je na váš pokyn nebo (volitelně) hned po dokončení a hlídá, aby se do schránky nedostala hesla a tokeny.
+Pure Clipboard je nativní aplikace pro Mac se dvěma částmi: schránkou (kopírování odpovědí z AI a z Terminálu, volitelná historie) a záložkou **Pure Remote** pro přijímání a odesílání dat s telefonem s Androidem (text přes Termux, soubory přes adb). Pomáhá přenášet odpovědi mezi AI nástroji, kopíruje je na váš pokyn nebo (volitelně) hned po dokončení a hlídá, aby se do schránky nedostala hesla a tokeny.
 
 **[Stáhnout verzi {{VERZE}} pro Mac (Apple Silicon)]** · SHA-256: `{{SHA256}}` · [Návod k instalaci](#instalace)
 
@@ -147,3 +149,7 @@ Zatím ne. Nastavení limitu je připravené, funkce se připravuje.
 - že automaticky kopíruje „všechno“ z Terminálu: kopíruje se jen příkaz spuštěný přes `pclip`;
 - že se aktualizuje samo (zatím ne);
 - že Termux funguje na každém telefonu nebo „sám sleduje schránku telefonu“: jen výslovné příkazy `pcr`, vyžaduje Termux, `openssh`, `termux-api`, aplikaci Termux:API, Tailscale a SSH klíč; ověřeno simulací, ne na všech zařízeních.
+
+## Testováno na
+
+MacBook Pro (Apple Silicon), macOS 27.2; telefon Samsung Galaxy S25+ (Android). Přenos souborů přes Wi‑Fi a text přes Termux ověřeny; přenos kabelem zatím ne.

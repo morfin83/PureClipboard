@@ -8,6 +8,8 @@ Návod je psaný pro úplné začátečníky. Zabere asi 5 minut.
 - macOS 14 nebo novější. Aplikace byla zatím vyzkoušena jen na macOS 27, starší verze nejsou ověřené.
 - **Macy s procesorem Intel zatím nejsou podporované.**
 
+> **Testováno na:** MacBook Pro (Apple Silicon), macOS 27.2; telefon Samsung Galaxy S25+ (Android).
+
 ## 1. Stáhněte a ověřte soubor
 
 Stáhněte soubor `PureClipboard-<verze>-arm64.dmg` z oficiální stránky PureStudio (až bude vydání dostupné; dnes existuje jen testovací ad-hoc sestavení, které se nestahuje). Vedle odkazu ke stažení je uvedený kontrolní součet **SHA-256**. Ověřením se ujistíte, že se soubor cestou nepoškodil a nikdo ho nepozměnil.
