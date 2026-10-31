@@ -30,7 +30,7 @@ Zdrojové soubory se jen čtou. Aplikace nepřidává žádný síťový kód an
 - Kabel (USB) je připravený, ale **nebyl vyzkoušen**.
 - Dílové posílání je sekvenční (jeden proud). Souběžné proudy a souběžný kabel + Wi‑Fi nejsou.
 - Úložiště telefonu musí mít místo na velikost souboru + 64 MB.
-- Fotky a videa po přenosu Android indexuje přes broadcast `MEDIA_SCANNER_SCAN_FILE` (jen přípony obrázků, videa a zvuku). **Na zařízení zatím neověřeno**, Android 11+ může broadcast omezit; bez něj se soubor v Galerii objeví až po čase.
+- Fotky a videa: po přenosu aplikace pošle telefonu broadcast `MEDIA_SCANNER_SCAN_FILE` (jen přípony obrázků, videa a zvuku). Ověřeno na S25 (30. 10. 2026): broadcast vrací `result=0` a soubor je v indexu MediaStore do několika sekund i bez něj; broadcast je tedy jen pojistka.
 - Bezdrátový ADB: port `5555` otevřený příkazem `adb tcpip 5555` se po restartu telefonu zavře. Alternativa: **Bezdrátové ladění** v nastavení pro vývojáře (adresa i port se tam zobrazí a mohou se měnit).
 
 ## Jak ověřit na reálném telefonu
