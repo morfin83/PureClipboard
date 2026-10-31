@@ -27,6 +27,7 @@ final class AppModel {
     let remote = RemoteController()
     let transfer: TransferController
     let history: HistoryController
+    let quickHistory: QuickHistoryController
 
     private var document: ConfigDocument?
     private var fingerprint: String?
@@ -39,7 +40,17 @@ final class AppModel {
         termux = TermuxController(store: store)
         history = HistoryController(configURL: store.url, monitoring: monitoring)
         transfer = TransferController(supportDirectory: store.url.deletingLastPathComponent(), monitoring: monitoring)
+        quickHistory = QuickHistoryController(history: history)
+        // Zkratka existuje jen v běžící aplikaci; sken obrazovky (monitoring false) ji nepotřebuje.
+        if monitoring {
+            quickHistory.startShortcut()
+        }
         reload()
+    }
+
+    /// Uvolní systémovou zkratku při ukončení aplikace.
+    func shutdown() {
+        quickHistory.stopShortcut()
     }
 
     func controller(for target: HookTarget) -> HookController { target == .claude ? claude : codex }

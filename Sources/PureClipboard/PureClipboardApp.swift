@@ -32,6 +32,9 @@ struct PureClipboardApp: App {
                 .environment(model)
                 .preferredColorScheme(.dark)
                 .frame(minWidth: 680, minHeight: 640)
+                .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+                    model.shutdown()
+                }
         }
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 760, height: 860)

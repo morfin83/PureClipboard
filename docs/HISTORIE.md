@@ -27,5 +27,13 @@ Lokální ukládání · nejvýše 100 položek · nejvýše 30 dní · položka
 ## Soukromí a odolnost
 Nic se neposílá do cloudu a aplikace nemá síťový kód. Poškozený `index.json` se odloží jako `index.corrupt-<čas>.json` (zruší ho „Smazat vše“) a historie začíná prázdná. Zápisy jsou atomické, souběh dvou procesů hlídá `flock`, symbolické odkazy a cizí vlastník složky se odmítají, názvy souborů s daty se ověřují.
 
+## Rychlá historie (⌥⌘V)
+Zkratka ⌥⌘V otevře malé plovoucí okno s posledními položkami historie a polem pro hledání.
+- **Šipky nahoru a dolů** vybírají položku, **Enter** ji zkopíruje do schránky, **Esc** okno zavře.
+- **Nic se nevkládá automaticky.** Pure Clipboard po Enteru jen nastaví schránku; ⌘V vložíte sami, kam chcete.
+- **Zkratka neposlouchá klávesy.** Registruje se přes systémovou funkci `RegisterEventHotKey` (Carbon), která doručí jen tuto jednu kombinaci. Aplikace nevidí ostatní stisky, nečte obrazovku a nepoužívá event tap.
+- **Bez zapnuté historie** okno jen ukáže „Historie je vypnutá. Zapněte ji v záložce Historie.“ a nic nesleduje. Otevření okna nic nezapíná; čte jen už uloženou historii.
+- Zkratka existuje jen za běhu aplikace a při ukončení se uvolní.
+
 ## Omezení
 Schránka macOS nemá oznámení o změně, proto se kontroluje každých 0,5 s (`changeCount`). Dvě kopie během jedné periody se sloučí do poslední. Sledování nefunguje, když aplikace neběží.
