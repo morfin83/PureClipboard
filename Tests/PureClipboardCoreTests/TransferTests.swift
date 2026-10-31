@@ -6,11 +6,16 @@ import Testing
 // MARK: Test doubles
 
 /// A "phone" that is a folder on this Mac. Failures and hooks make the awkward cases deterministic.
-private final class FakePhone: PhoneFiles, @unchecked Sendable {
+final class FakePhone: PhoneFiles, @unchecked Sendable {
     let root: URL
     private let lock = NSLock()
     private var _pushCount = 0
     private var _appendCount = 0
+    private var _readCount = 0
+    var failReads: Set<Int> = []
+    var loseReplyOnRead: Set<Int> = []
+    var onRead: (@Sendable (Int) async -> Void)?
+    var readCount: Int { lock.withLock { _readCount } }
     var failPushes: Set<Int> = []
     var failAllPushesAfter: Int?
     var loseReplyOnAppend: Set<Int> = []
@@ -72,6 +77,35 @@ private final class FakePhone: PhoneFiles, @unchecked Sendable {
         if loseReplyOnAppend.contains(number) { throw TransferError.timedOut }
         return try await size(of: file) ?? 0
     }
+    func listFiles(in folder: String) async throws -> [PhoneFileEntry] {
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: url(folder).path)) ?? []
+        var result: [PhoneFileEntry] = []
+        for name in names where !name.hasPrefix(".") {
+            if let found = try await entry(at: "\(folder)/\(name)") { result.append(found) }
+        }
+        return result
+    }
+    func entry(at path: String) async throws -> PhoneFileEntry? {
+        guard let attributes = try? FileManager.default.attributesOfItem(atPath: url(path).path),
+              attributes[.type] as? FileAttributeType == .typeRegular else { return nil }
+        let modified = (attributes[.modificationDate] as? Date)?.timeIntervalSince1970 ?? 0
+        return PhoneFileEntry(
+            name: String(path.split(separator: "/").last ?? ""), path: path,
+            size: (attributes[.size] as? NSNumber)?.int64Value ?? 0, modifiedAt: Double(Int(modified))
+        )
+    }
+    func readRange(_ path: String, offset: Int64, length: Int64) async throws -> Data {
+        let number = lock.withLock { () -> Int in _readCount += 1; return _readCount }
+        await onRead?(number)
+        if failReads.contains(number) { throw TransferError.commandFailed("simulovaný výpadek čtení") }
+        let handle = try FileHandle(forReadingFrom: url(path))
+        defer { try? handle.close() }
+        try handle.seek(toOffset: UInt64(offset))
+        let data = try handle.read(upToCount: Int(length)) ?? Data()
+        // A lost reply: the bytes were produced on the phone, but the Mac never receives them.
+        if loseReplyOnRead.contains(number) { throw TransferError.timedOut }
+        return data
+    }
     func sha256(of path: String) async throws -> String {
         guard let data = read(path) else { throw TransferError.commandFailed("chybí soubor") }
         let hash = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
@@ -95,7 +129,7 @@ private final class FakePhone: PhoneFiles, @unchecked Sendable {
     }
 }
 
-private struct FakeResolver: PhoneResolving {
+struct FakeResolver: PhoneResolving {
     let phone: FakePhone?
     var link: TransferLink = .wifi
     var failure: TransferError?
@@ -116,7 +150,7 @@ private final class ResolverBox: PhoneResolving, @unchecked Sendable {
     }
 }
 
-private final class Lab: @unchecked Sendable {
+final class Lab: @unchecked Sendable {
     let support: URL
     let sources: URL
     let store: TransferStore

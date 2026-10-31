@@ -118,6 +118,22 @@ public struct TransferStore: Sendable {
     public func removeTemporaryFiles(for id: String) {
         try? FileManager.default.removeItem(at: temporaryDirectory.appendingPathComponent("\(id).chunk"))
     }
+
+    // MARK: Pulls (phone → Mac): the partial file lives here until the checksum matches
+
+    public var pullDirectory: URL { root.appendingPathComponent("pull", isDirectory: true) }
+
+    /// `<root>/pull/<id>.part`. Its size says how much of the file has arrived on this Mac.
+    public func partialURL(for id: String) throws -> URL {
+        guard Self.isValidID(id) else { throw TransferError.invalidSource("Neplatný identifikátor přenosu.") }
+        try ensure(pullDirectory)
+        return pullDirectory.appendingPathComponent("\(id).part")
+    }
+
+    public func removePartialFile(for id: String) {
+        guard Self.isValidID(id) else { return }
+        try? FileManager.default.removeItem(at: pullDirectory.appendingPathComponent("\(id).part"))
+    }
 }
 
 /// Reads a byte range of a file into a new file (the chunk handed to `adb push`).

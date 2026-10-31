@@ -16,6 +16,12 @@ private struct MissingAdbResolver: PhoneResolving {
 final class TransferController {
     private(set) var jobs: [TransferJob] = []
     private(set) var speeds: [String: Double] = [:]
+    /// Phone → Mac downloads; they have their own engine and are shown in their own section.
+    private(set) var pullJobs: [TransferJob] = []
+    /// The Downloads folder of the phone, as last listed by the user (never loaded automatically).
+    private(set) var phoneFiles: [PhoneFileEntry] = []
+    private(set) var phoneListLoaded = false
+    private(set) var phoneListMessage: String?
     private(set) var settings: TransferSettings
     private(set) var adbPath: String?
     private(set) var notice: String?
@@ -23,9 +29,10 @@ final class TransferController {
 
     private let store: TransferStore
     private let engine: TransferEngine
+    private let pullEngine: PullEngine
     private var pollTask: Task<Void, Never>?
 
-    var activeCount: Int { jobs.filter { $0.state.isActive || $0.state == .queued }.count }
+    var activeCount: Int { (jobs + pullJobs).filter { $0.state.isActive || $0.state == .queued }.count }
 
     init(supportDirectory: URL, monitoring: Bool) {
         let store = TransferStore(supportDirectory: supportDirectory)
@@ -37,6 +44,7 @@ final class TransferController {
         adbPath = adb
         let resolver: any PhoneResolving = adb.map { AdbPhoneResolver(adb: $0) } ?? MissingAdbResolver()
         engine = TransferEngine(store: store, resolver: resolver, settings: settings)
+        pullEngine = PullEngine(store: store, resolver: resolver, settings: settings)
         if monitoring {
             Task { await self.start() }
         } else {
@@ -52,6 +60,10 @@ final class TransferController {
                 self?.jobs = jobs
                 self?.speeds = speeds
             }
+        }
+        // Pulls: no system notifications yet, the card shows their state.
+        await pullEngine.setObserver { [weak self] jobs, _ in
+            Task { @MainActor in self?.pullJobs = jobs }
         }
         pollTask = Task { [weak self] in
             while !Task.isCancelled {
@@ -161,12 +173,71 @@ final class TransferController {
 
     // MARK: Actions
 
-    func pause(_ job: TransferJob) { Task { await engine.pause(job.id) } }
-    func resume(_ job: TransferJob) { Task { await engine.resume(job.id) } }
-    func resumeOnMobileData(_ job: TransferJob) { Task { await engine.resume(job.id, allowMobileData: true) } }
-    func cancel(_ job: TransferJob) { Task { await engine.cancel(job.id) } }
-    func remove(_ job: TransferJob) { Task { await engine.remove(job.id) } }
-    func clearFinished() { Task { await engine.clearFinished() } }
+    func pause(_ job: TransferJob) {
+        Task {
+            if job.direction == .pull { await pullEngine.pause(job.id) } else { await engine.pause(job.id) }
+        }
+    }
+
+    func resume(_ job: TransferJob) {
+        Task {
+            if job.direction == .pull { await pullEngine.resume(job.id) } else { await engine.resume(job.id) }
+        }
+    }
+
+    func resumeOnMobileData(_ job: TransferJob) {
+        Task {
+            if job.direction == .pull {
+                await pullEngine.resume(job.id, allowMobileData: true)
+            } else {
+                await engine.resume(job.id, allowMobileData: true)
+            }
+        }
+    }
+
+    func cancel(_ job: TransferJob) {
+        Task {
+            if job.direction == .pull { await pullEngine.cancel(job.id) } else { await engine.cancel(job.id) }
+        }
+    }
+
+    func remove(_ job: TransferJob) {
+        Task {
+            if job.direction == .pull { await pullEngine.remove(job.id) } else { await engine.remove(job.id) }
+        }
+    }
+
+    func clearFinished() {
+        Task {
+            await engine.clearFinished()
+            await pullEngine.clearFinished()
+        }
+    }
+
+    // MARK: Phone → Mac
+
+    /// Lists the phone's Downloads folder. Called only from the button, never automatically.
+    func loadPhoneFiles() {
+        Task {
+            do {
+                let files = try await pullEngine.listDownloads()
+                phoneFiles = files
+                phoneListMessage = files.isEmpty ? "Složka Stažené v telefonu je prázdná." : nil
+            } catch {
+                phoneFiles = []
+                phoneListMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            }
+            phoneListLoaded = true
+        }
+    }
+
+    /// Starts one download; only a click on „Stáhnout“ reaches this.
+    func download(_ file: PhoneFileEntry) {
+        Task {
+            let result = await pullEngine.enqueue([file])
+            phoneListMessage = result.rejected.isEmpty ? nil : "Soubor \(file.name) nelze stáhnout (je mimo složku Stažené)."
+        }
+    }
 
     // MARK: Preview data for the rendered screenshots
 
