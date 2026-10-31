@@ -4,6 +4,9 @@ Stav (v0.8.0): **lokální testovací ad-hoc DMG** pro 0.7.0 existuje (`dist/Pur
 
 Plnění závazných požadavků najdete v [PLAN.md](../PLAN.md).
 
+## Automatické testy
+`.github/workflows/tests.yml` spouští na GitHubu při každém pushi do `main` a u pull requestů `swift test` a ad-hoc sestavení aplikace. **Na skutečném běhovém prostředí GitHubu zatím neověřeno** (macOS 15, dostupnost Xcode s Swift 6); první běh je třeba zkontrolovat v záložce Actions.
+
 ## Přehled souborů
 
 | Soubor | K čemu |
