@@ -199,10 +199,15 @@ public enum PhoneStaging {
 public struct PhoneTarget: Sendable {
     public var phone: any PhoneFiles
     public var link: TransferLink
+    /// The address that actually answered (may differ from the saved one after an mDNS discovery).
+    public var endpoint: String?
+    public var serial: String?
 
-    public init(phone: any PhoneFiles, link: TransferLink) {
+    public init(phone: any PhoneFiles, link: TransferLink, endpoint: String? = nil, serial: String? = nil) {
         self.phone = phone
         self.link = link
+        self.endpoint = endpoint
+        self.serial = serial
     }
 }
 
@@ -309,6 +314,15 @@ public struct AdbPhone: PhoneFiles {
         let b = ShellQuoting.quote(to)
         let output = try await shell("if [ -e \(b) ]; then echo busy; else mv \(a) \(b) && echo ok; fi")
         guard output.trimmingCharacters(in: .whitespacesAndNewlines) == "ok" else { throw TransferError.destinationBusy }
+    }
+
+    /// The phone's own serial number (`ro.serialno`), used to find it again after its port changes.
+    public func serialNumber() async throws -> String {
+        let value = try await shell("getprop ro.serialno").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty, value.count <= 64, value.allSatisfy({ $0.isLetter || $0.isNumber }) else {
+            throw TransferError.commandFailed("neplatné sériové číslo")
+        }
+        return value
     }
 
     public func removeStaging(_ path: String) async throws {
@@ -420,18 +434,18 @@ public struct AdbPhoneResolver: PhoneResolving {
             return PhoneTarget(phone: AdbPhone(adb: adb, serial: usb.serial, runner: runner), link: .usb)
         }
         if let endpoint = settings.endpoint {
-            _ = try? await runner.run(adb, ["connect", endpoint], timeout: 15)
-            listed = try await devices()
-            if let wireless = listed.first(where: { $0.serial == endpoint }) {
-                switch wireless.state {
-                case "device":
-                    let phone = AdbPhone(adb: adb, serial: endpoint, runner: runner)
-                    return PhoneTarget(phone: phone, link: await Self.networkLink(phone: phone, runner: runner, adb: adb, serial: endpoint))
-                case "unauthorized":
-                    throw TransferError.noPhone("Telefon nepovolil tento Mac. Potvrďte na telefonu dialog ladění.")
-                default:
-                    throw TransferError.noPhone("Telefon je ve stavu „\(wireless.state)“.")
+            // 1) The saved address. 2) If it is dead (the phone rebooted and got a new port), look for the phone
+            // on the local network by its serial number. Both need the phone to be reachable; neither changes the phone.
+            if let answered = try await connectedDevice(at: endpoint, listed: &listed) {
+                return try await target(for: answered, settings: settings)
+            }
+            if let serial = settings.phoneSerial, let found = await discoverEndpoint(serial: serial) {
+                if let answered = try await connectedDevice(at: found, listed: &listed) {
+                    return try await target(for: answered, settings: settings)
                 }
+            }
+            if let serial = settings.phoneSerial {
+                throw TransferError.noPhone("Telefon (\(serial)) na adrese \(endpoint) neodpovídá a na místní síti se nenašel. Pokud je mimo Wi‑Fi Macu (mobilní data), zadejte aktuální port z Bezdrátového ladění.")
             }
             throw TransferError.noPhone("Telefon na adrese \(endpoint) neodpovídá. Zapněte bezdrátové ladění a Wi‑Fi nebo připojte kabel.")
         }
@@ -439,6 +453,42 @@ public struct AdbPhoneResolver: PhoneResolving {
             throw TransferError.noPhone("Telefon nepovolil tento Mac. Potvrďte na telefonu dialog ladění.")
         }
         throw TransferError.noPhone("Telefon není připojený. Připojte kabel, nebo zadejte adresu pro bezdrátové ladění.")
+    }
+
+    /// Connects to `endpoint` and returns it when `adb` reports it as a ready device.
+    private func connectedDevice(at endpoint: String, listed: inout [Device]) async throws -> String? {
+        _ = try? await runner.run(adb, ["connect", endpoint], timeout: 15)
+        listed = try await devices()
+        guard let wireless = listed.first(where: { $0.serial == endpoint }) else { return nil }
+        switch wireless.state {
+        case "device": return endpoint
+        case "unauthorized": throw TransferError.noPhone("Telefon nepovolil tento Mac. Potvrďte na telefonu dialog ladění.")
+        default: throw TransferError.noPhone("Telefon je ve stavu „\(wireless.state)“.")
+        }
+    }
+
+    private func target(for endpoint: String, settings: TransferSettings) async throws -> PhoneTarget {
+        let phone = AdbPhone(adb: adb, serial: endpoint, runner: runner)
+        let link = await Self.networkLink(phone: phone, runner: runner, adb: adb, serial: endpoint)
+        var serial = settings.phoneSerial
+        if serial == nil { serial = try? await phone.serialNumber() }
+        return PhoneTarget(phone: phone, link: link, endpoint: endpoint, serial: serial)
+    }
+
+    /// Finds the phone among `_adb-tls-connect` services on the local network. Its service name contains its serial.
+    func discoverEndpoint(serial: String) async -> String? {
+        guard let result = try? await runner.run(adb, ["mdns", "services"], timeout: 15), result.status == 0 else { return nil }
+        return Self.parseMDNS(result.stdout).first { $0.name.contains(serial) }?.endpoint
+    }
+
+    /// Lines look like `adb-<serial>-<suffix>\t_adb-tls-connect._tcp\t10.0.0.83:35857`.
+    static func parseMDNS(_ output: String) -> [(name: String, endpoint: String)] {
+        output.split(whereSeparator: \.isNewline).compactMap { line in
+            let parts = line.split(separator: "\t").map { $0.trimmingCharacters(in: .whitespaces) }
+            guard parts.count == 3, parts[1].hasPrefix("_adb-tls-connect") else { return nil }
+            guard parts[2].contains(":"), parts[2].count <= 80 else { return nil }
+            return (parts[0], parts[2])
+        }
     }
 
     /// Wi‑Fi switched off on a phone reached over the network means the traffic goes over mobile data.

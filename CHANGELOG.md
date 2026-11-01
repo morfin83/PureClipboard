@@ -1,5 +1,11 @@
 # Změny
 
+## 0.8.1
+- Oprava: po změně adresy telefonu v Pure Remote se nově zadaná adresa použije i pro stahování a seznam ze S25 (dřív se projevila jen u odesílání).
+- Telefon se po restartu může objevit na jiném portu. Aplikace ho hledá na místní síti podle sériového čísla (mDNS) a uloží aktuální adresu. Když telefon není na stejné síti (mobilní data, hotspot), zadejte port z Bezdrátového ladění ručně.
+- Po uložení adresy se hned ověří připojení a zobrazí výsledek.
+- Verze 0.8.1 (build 9).
+
 ## 0.8.0
 - **Přenos souborů Mac → telefon** v Pure Remote: soubory jdou do složky Stažené v telefonu po dílech přes `adb` (kabel USB, jinak Wi‑Fi). Lze je pozastavit a pokračovat bez nového začátku; u každého souboru je vidět průběh a rychlost.
 - Hotový soubor se ověří SHA‑256 na telefonu a teprve potom se přesune do cíle; existující soubor se nepřepíše.

@@ -28,6 +28,7 @@ final class TransferController {
     var endpointText: String
 
     private let store: TransferStore
+    private let resolver: any PhoneResolving
     private let engine: TransferEngine
     private let pullEngine: PullEngine
     private var pollTask: Task<Void, Never>?
@@ -43,6 +44,7 @@ final class TransferController {
         let adb = AdbLocator.find()
         adbPath = adb
         let resolver: any PhoneResolving = adb.map { AdbPhoneResolver(adb: $0) } ?? MissingAdbResolver()
+        self.resolver = resolver
         engine = TransferEngine(store: store, resolver: resolver, settings: settings)
         pullEngine = PullEngine(store: store, resolver: resolver, settings: settings)
         if monitoring {
@@ -149,9 +151,44 @@ final class TransferController {
             try store.save(new)
             settings = new
             notice = nil
-            Task { await engine.updateSettings(new) }
+            Task {
+                await engine.updateSettings(new)
+                await pullEngine.updateSettings(new)
+            }
+            testConnection()
         } catch {
             notice = "Nastavení se nepodařilo uložit: \(error.localizedDescription)"
+        }
+    }
+
+    /// Checks that the phone answers now. When it answers on another port (found on the local network), the new
+    /// address and the phone's serial number are saved, so the next connection starts from the right place.
+    func testConnection() {
+        Task { await checkConnection() }
+    }
+
+    private func checkConnection() async {
+        let current = settings
+        do {
+            let target = try await resolver.resolve(settings: current)
+            var updated = current
+            if let endpoint = target.endpoint, endpoint != current.endpoint {
+                updated.endpoint = endpoint
+            }
+            if let serial = target.serial, serial != current.phoneSerial {
+                updated.phoneSerial = serial
+            }
+            if updated != current {
+                try store.save(updated)
+                settings = updated
+                endpointText = updated.endpoint ?? ""
+                await engine.updateSettings(updated)
+                await pullEngine.updateSettings(updated)
+            }
+            let via = target.link == .mobile ? " (mobilní data)" : ""
+            notice = "Telefon odpovídá na \(target.endpoint ?? "kabelu USB")\(via)."
+        } catch {
+            notice = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
     }
 

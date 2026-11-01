@@ -52,6 +52,16 @@ Stav: **NAVRŽENO** a ověřeno testy s falešným telefonem (`PullEngineTests`,
 - Omezení: výpis a čtení přes `tail -c +N` mohou být u velkých souborů s rostoucím offsetem pomalejší (neměřeno). Notifikace systému se pro stahování zatím nezobrazují.
 - Reálný test (**NAVRŽENO, neprovedeno**): stáhnout malý soubor, který uživatel sám položí do Stažených v telefonu, pozastavit ho uprostřed a pokračovat. Ověřit, že v ~/Downloads vznikl soubor se stejným SHA‑256 jako na telefonu.
 
+## Adresa telefonu a port (0.8.1)
+Bezdrátové ladění na Androidu mění port po každém restartu telefonu. IP adresa v Tailscale (`100.x.x.x`) zůstává stejná, mění se jen port. Port nejde na telefonu bez kabelu a root oprávnění uzamknout.
+
+Aplikace postupuje takto:
+1. Zkusí uloženou adresu `IP:port`.
+2. Když neodpoví, najde telefon přes mDNS (`adb mdns services`) podle sériového čísla uloženého při prvním připojení a připojí se na aktuální port. Funguje to jen tehdy, když je telefon na místní síti s Macem (stejná Wi‑Fi nebo hotspot telefonu).
+3. Když telefon není na místní síti (mobilní data), port se musí zadat ručně z Bezdrátového ladění.
+
+Po uložení adresy aplikace hned ověří připojení a zobrazí výsledek. Nová adresa a sériové číslo se uloží.
+
 ## Rychlá akce „odeslat do S25“ (Finder)
 Od 30. 10. 2026 akce **předává soubory aplikaci**, nepřenáší je sama. Akce je v `~/Library/Services/odeslat do S25.workflow`; původní verze je zálohovaná v `~/Library/Application Support/PureClipboard/backups/quick-action-*`.
 

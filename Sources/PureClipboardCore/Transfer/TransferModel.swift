@@ -121,12 +121,15 @@ extension TransferJob {
 public struct TransferSettings: Codable, Sendable, Equatable {
     /// `host:port` of the phone for wireless ADB (e.g. its Tailscale address); nil = USB only.
     public var endpoint: String?
+    /// Serial number of the phone as reported by `adb` (`ro.serialno`). Lets the app find the phone again when its port changes.
+    public var phoneSerial: String?
     public var destinationDirectory: String
 
     public static let defaultDestination = "/sdcard/Download"
 
-    public init(endpoint: String? = nil, destinationDirectory: String = TransferSettings.defaultDestination) {
+    public init(endpoint: String? = nil, phoneSerial: String? = nil, destinationDirectory: String = TransferSettings.defaultDestination) {
         self.endpoint = endpoint
+        self.phoneSerial = phoneSerial
         self.destinationDirectory = destinationDirectory
     }
 
