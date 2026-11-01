@@ -3,6 +3,9 @@
 Snímek ze **30. 10. 2026**, verze **0.8.0** (Milník 6: přenos souborů, viz [docs/PRENOS-SOUBORU.md](docs/PRENOS-SOUBORU.md)). Podrobnosti: [PLAN.md](PLAN.md), [README.md](README.md), [docs/HISTORIE.md](docs/HISTORIE.md), [docs/DISTRIBUCE.md](docs/DISTRIBUCE.md).
 
 ## Stav k 1. 11. 2026
+- **Verze 0.8.1 (build 9)**, `main` na `1dbeecb`. Oprava adresy telefonu: pull engine dostává novou adresu; po restartu telefonu se port hledá přes mDNS podle sériového čísla (jen na místní síti); po uložení se ověří připojení. Mobilní data nebo hotspot bez společné sítě vyžadují ručně zadaný port z Bezdrátového ladění.
+- Nainstalováno v `/Applications` (0.8.1). Testovací DMG 0.8.1 ve Stažených, starý 0.8.0 ponechán vedle něj. Repozitářová kopie `build/` a staré DMG v `dist/` odstraněny; Spotlight ukazuje jen tuto jednu kopii.
+- Neověřeno na zařízení: nová logika hledání portu (mDNS) proti S25 po restartu.
 - Verze **0.8.0 (build 8)**, `main` na `644a61f` (pushnuto). Obsahuje: přenos souborů v obou směrech, rychlou historii ⌥⌘V (`QuickPickerModel`, `GlobalHotKey`), oznámení na Macu, indexaci médií, CI workflow.
 - Nainstalováno v `/Applications` z testovacího ad-hoc DMG (`~/Downloads/PureClipboard-0.8.0-arm64-adhoc-TEST.dmg`, SHA-256 `642ae0ae…`), nenotarizováno, nepublikováno.
 - Ověřeno uživatelem (podle jeho zadání): stažení z telefonu a zkratka ⌥⌘V (výsledky viz historie chatu; pokud nebyly výslovně zapsány, zapsat při dalším ověření).
